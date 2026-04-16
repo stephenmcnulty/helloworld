@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US National Debt</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0e1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .debt-box {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border: 1px solid #1e3a5f;
+      border-radius: 1.25rem;
+      padding: 2.5rem 3rem;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(59, 130, 246, 0.12), 0 0 120px rgba(59, 130, 246, 0.05);
+      max-width: 860px;
+      width: 100%;
+    }
+
+    .label {
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 0.6rem;
+    }
+
+    #counter {
+      font-size: clamp(2.2rem, 7vw, 4.8rem);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      color: #f8fafc;
+      line-height: 1.1;
+      min-height: 1.2em;
+      transition: color 0.3s;
+    }
+
+    #counter.loading { color: #334155; }
+
+    .currency-symbol {
+      font-size: 0.55em;
+      vertical-align: super;
+      color: #ef4444;
+      margin-right: 0.1em;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #1e3a5f, transparent);
+      margin: 2rem 0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .stat { }
+    .stat .stat-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+    }
+    .stat .stat-value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .source-note {
+      margin-top: 2rem;
+      font-size: 0.72rem;
+      color: #334155;
+      text-align: center;
+    }
+
+    .source-note a { color: #3b5ea6; text-decoration: none; }
+    .source-note a:hover { text-decoration: underline; }
+
+    .live-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 5px;
+      animation: pulse 2s infinite;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .error-msg {
+      color: #f87171;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    #last-updated {
+      font-size: 0.8rem;
+      color: #475569;
+      margin-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>U.S. National Debt</h1>
+
+  <div class="debt-box">
+    <div class="label">Total Public Debt Outstanding</div>
+    <div id="counter" class="loading"><span class="currency-symbol">$</span>Loading...</div>
+    <div id="last-updated"></div>
+
+    <div class="error-msg" id="error">Unable to load data. Check your connection.</div>
+
+    <div class="divider"></div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">Per Citizen</div>
+        <div class="stat-value" id="per-citizen">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Per Taxpayer</div>
+        <div class="stat-value" id="per-taxpayer">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Est. Growth/sec</div>
+        <div class="stat-value" id="per-second">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Record Date</div>
+        <div class="stat-value" id="record-date">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="source-note">
+    <span class="live-dot"></span>
+    Live counter estimated from latest Treasury data &middot;
+    Source: <a href="https://fiscaldata.treasury.gov" target="_blank" rel="noopener">fiscaldata.treasury.gov</a>
+  </div>
+
+<script>
+  // Approximate constants (updated periodically by Congress / CBO estimates)
+  const US_POPULATION   = 335_000_000;
+  const US_TAXPAYERS    = 150_000_000;
+  // ~$2.3 trillion deficit/year → ~$72,900/sec (2024 estimate)
+  const DEBT_PER_SECOND = 72_900;
+
+  const API_URL =
+    'https://api.fiscaldata.treasury.gov/services/api/v1/debt/od/debt_to_penny' +
+    '?fields=tot_pub_debt_out_amt,record_date' +
+    '&sort=-record_date&page[number]=1&page[size]=1';
+
+  let baseDebt   = null;   // debt as of record_date
+  let baseTime   = null;   // Date object for when we started animating
+  let animFrame  = null;
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function fmtDebt(n) {
+    // Render without the leading $ (we add it via CSS span)
+    return Math.round(n).toLocaleString('en-US');
+  }
+
+  function secondsSinceRecordDate(recordDateStr) {
+    // recordDateStr is "YYYY-MM-DD"
+    const recordDate = new Date(recordDateStr + 'T00:00:00Z');
+    return (Date.now() - recordDate.getTime()) / 1000;
+  }
+
+  function tick() {
+    if (baseDebt === null) return;
+    const elapsed = (Date.now() - baseTime) / 1000;
+    const current = baseDebt + elapsed * DEBT_PER_SECOND;
+
+    const el = document.getElementById('counter');
+    el.innerHTML = '<span class="currency-symbol">$</span>' + fmtDebt(current);
+
+    animFrame = requestAnimationFrame(tick);
+  }
+
+  async function fetchDebt() {
+    try {
+      const resp = await fetch(API_URL);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const json = await resp.json();
+      const row  = json.data[0];
+      const rawDebt     = parseFloat(row.tot_pub_debt_out_amt);
+      const recordDate  = row.record_date;
+
+      // Estimate current debt by extrapolating from record date
+      const secSinceRecord = secondsSinceRecordDate(recordDate);
+      baseDebt = rawDebt + secSinceRecord * DEBT_PER_SECOND;
+      baseTime = Date.now();
+
+      // Secondary stats
+      document.getElementById('per-citizen').textContent  = fmt(baseDebt / US_POPULATION);
+      document.getElementById('per-taxpayer').textContent = fmt(baseDebt / US_TAXPAYERS);
+      document.getElementById('per-second').textContent   = fmt(DEBT_PER_SECOND) + '/s';
+      document.getElementById('record-date').textContent  = recordDate;
+      document.getElementById('last-updated').textContent =
+        'as of ' + new Date().toLocaleTimeString();
+
+      document.getElementById('counter').classList.remove('loading');
+
+      if (animFrame) cancelAnimationFrame(animFrame);
+      tick();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('counter').textContent = 'Error';
+      document.getElementById('error').style.display = 'block';
+    }
+  }
+
+  fetchDebt();
+  // Refresh data every 5 minutes
+  setInterval(fetchDebt, 5 * 60 * 1000);
+</script>
+</body>
+</html>
