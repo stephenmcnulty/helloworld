@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-v8';
+const CACHE_NAME = 'daily-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -33,6 +33,10 @@ const ASSETS = [
   './finance-gaap-7.js',
   './finance-nonprofit-7.js',
   './finance-investing-7.js',
+  './finance-corporate-8.js',
+  './finance-gaap-8.js',
+  './finance-nonprofit-8.js',
+  './finance-investing-8.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
