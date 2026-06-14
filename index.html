@@ -266,6 +266,73 @@
     .checkbox-row input { width: 1.1rem; height: 1.1rem; accent-color: var(--gold); }
 
     .checkbox-row.done { color: var(--green); }
+
+    .quiz-question { margin-bottom: 1.2rem; }
+    .quiz-question:last-child { margin-bottom: 0; }
+
+    .quiz-q {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.65rem;
+      line-height: 1.45;
+    }
+
+    .quiz-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .quiz-choice {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      background: var(--navy-light);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 0.6rem;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+
+    .quiz-choice input {
+      margin-top: 0.15rem;
+      accent-color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .quiz-choice.correct { border-color: var(--green); background: rgba(76,175,120,0.12); }
+    .quiz-choice.incorrect { border-color: #e25858; background: rgba(226,88,88,0.12); }
+
+    .quiz-submit {
+      background: var(--gold);
+      color: #1a1407;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 0.6rem;
+      padding: 0.55rem 1.1rem;
+      cursor: pointer;
+    }
+
+    .quiz-explanation {
+      margin-top: 0.7rem;
+      padding: 0.7rem 0.85rem;
+      background: var(--navy-light);
+      border-radius: 0.6rem;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .quiz-verdict {
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      color: var(--gold-soft);
+    }
+
+    .quiz-hint { color: var(--text-dim); }
   </style>
 </head>
 <body>
@@ -314,6 +381,7 @@
           <span id="finance-done-label">Mark as read</span>
         </label>
       </div>
+      <div id="finance-quiz"></div>
       <div class="group-label">Browse Other Topics</div>
       <div class="other-topics" id="finance-topics"></div>
     </section>

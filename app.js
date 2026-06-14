@@ -105,7 +105,94 @@ function showFinanceArticle(article) {
     btn.classList.toggle('active', btn.dataset.id === article.id);
   });
 
+  renderQuiz(article);
   refreshDoneState();
+}
+
+// ---------- Quiz ----------
+const financeQuiz = document.getElementById('finance-quiz');
+
+function renderQuiz(article) {
+  financeQuiz.innerHTML = '';
+  if (!article.quiz || !article.quiz.length) return;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const heading = document.createElement('h2');
+  heading.textContent = 'Quick Quiz';
+  card.appendChild(heading);
+
+  article.quiz.forEach((q, qi) => {
+    const qWrap = document.createElement('div');
+    qWrap.className = 'quiz-question';
+
+    const qText = document.createElement('p');
+    qText.className = 'quiz-q';
+    qText.textContent = `${qi + 1}. ${q.q}`;
+    qWrap.appendChild(qText);
+
+    const choicesWrap = document.createElement('div');
+    choicesWrap.className = 'quiz-choices';
+
+    q.choices.forEach((choice, ci) => {
+      const label = document.createElement('label');
+      label.className = 'quiz-choice';
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = `quiz-${article.id}-${qi}`;
+      input.value = String(ci);
+
+      const span = document.createElement('span');
+      span.textContent = choice;
+
+      label.appendChild(input);
+      label.appendChild(span);
+      choicesWrap.appendChild(label);
+    });
+    qWrap.appendChild(choicesWrap);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'quiz-submit';
+    submitBtn.textContent = 'Submit Answer';
+
+    const explanation = document.createElement('div');
+    explanation.className = 'quiz-explanation';
+    explanation.style.display = 'none';
+
+    submitBtn.addEventListener('click', () => {
+      const selected = choicesWrap.querySelector('input:checked');
+
+      if (!selected) {
+        explanation.style.display = 'block';
+        explanation.innerHTML = '<p class="quiz-hint">Pick an answer first, then submit.</p>';
+        return;
+      }
+
+      const chosenIdx = parseInt(selected.value, 10);
+
+      choicesWrap.querySelectorAll('.quiz-choice').forEach((label, ci) => {
+        label.classList.remove('correct', 'incorrect');
+        if (ci === q.correct) {
+          label.classList.add('correct');
+        } else if (ci === chosenIdx) {
+          label.classList.add('incorrect');
+        }
+      });
+
+      const verdict = chosenIdx === q.correct ? 'Correct!' : 'Not quite.';
+      explanation.innerHTML =
+        `<p class="quiz-verdict">${verdict}</p><p>${q.explanation}</p>`;
+      explanation.style.display = 'block';
+    });
+
+    qWrap.appendChild(submitBtn);
+    qWrap.appendChild(explanation);
+    card.appendChild(qWrap);
+  });
+
+  financeQuiz.appendChild(card);
 }
 
 function readKey(article) {
