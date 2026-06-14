@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Accounting &amp; Finance Quiz</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0e1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem;
+    }
+
+    .wrap {
+      max-width: 640px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    h1 {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    #date-line {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: #475569;
+      letter-spacing: 0.05em;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border: 1px solid #1e3a5f;
+      border-radius: 1.25rem;
+      padding: 1.75rem 1.75rem 2rem;
+      box-shadow: 0 0 60px rgba(59, 130, 246, 0.10), 0 0 120px rgba(59, 130, 246, 0.04);
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .category-badge.accounting {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .category-badge.finance {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .progress-bar-track {
+      height: 4px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, #3b82f6, #22c55e);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    #question-text {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #f8fafc;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid #283750;
+      border-radius: 0.75rem;
+      background: #0f1729;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-align: left;
+    }
+
+    .option:hover:not(.locked) {
+      border-color: #3b5ea6;
+      background: #131f38;
+    }
+
+    .option .opt-letter {
+      flex: 0 0 auto;
+      width: 1.6rem;
+      height: 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.4rem;
+      background: #1e293b;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .option.selected {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.12);
+    }
+
+    .option.selected .opt-letter {
+      background: #3b82f6;
+      color: #f8fafc;
+    }
+
+    .option.correct {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+    }
+
+    .option.correct .opt-letter {
+      background: #22c55e;
+      color: #06240f;
+    }
+
+    .option.incorrect {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .option.incorrect .opt-letter {
+      background: #ef4444;
+      color: #2a0707;
+    }
+
+    .option.locked {
+      cursor: default;
+    }
+
+    .hint-row {
+      margin-bottom: 1.1rem;
+    }
+
+    .hint-toggle {
+      background: none;
+      border: 1px dashed #334155;
+      color: #94a3b8;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .hint-toggle:hover {
+      border-color: #64748b;
+      color: #cbd5e1;
+    }
+
+    .hint-box {
+      margin-top: 0.6rem;
+      padding: 0.75rem 1rem;
+      background: rgba(250, 204, 21, 0.06);
+      border: 1px solid rgba(250, 204, 21, 0.25);
+      border-radius: 0.6rem;
+      font-size: 0.85rem;
+      color: #fde68a;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .hint-box.visible { display: block; }
+
+    .feedback {
+      display: none;
+      margin-bottom: 1.1rem;
+      padding: 1rem 1.1rem;
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .feedback.visible { display: block; }
+
+    .feedback.correct-fb {
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .feedback.incorrect-fb {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .feedback .fb-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .feedback.correct-fb .fb-title { color: #4ade80; }
+    .feedback.incorrect-fb .fb-title { color: #f87171; }
+
+    .feedback .fb-explanation {
+      color: #cbd5e1;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #f8fafc;
+      border: none;
+      padding: 0.65rem 1.5rem;
+      border-radius: 0.6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    button.primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    button.primary:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    /* Summary screen */
+    #summary {
+      text-align: center;
+      display: none;
+    }
+
+    #summary.visible { display: block; }
+
+    #summary .score {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin: 0.5rem 0 0.25rem;
+    }
+
+    #summary .score-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+
+    #summary .score-message {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-bottom: 1.5rem;
+    }
+
+    .source-note {
+      margin-top: 2rem;
+      font-size: 0.72rem;
+      color: #334155;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header>
+      <h1>Daily Accounting &amp; Finance Quiz</h1>
+      <div id="date-line"></div>
+    </header>
+
+    <div class="card">
+      <div id="quiz-area">
+        <div class="progress-row">
+          <span id="category-badge" class="category-badge accounting">Accounting</span>
+          <span id="progress-text">Question 1 of 5</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+
+        <div id="question-text"></div>
+
+        <div class="options" id="options"></div>
+
+        <div class="hint-row">
+          <button class="hint-toggle" id="hint-toggle">Show hint</button>
+          <div class="hint-box" id="hint-box"></div>
+        </div>
+
+        <div class="feedback" id="feedback">
+          <div class="fb-title" id="fb-title"></div>
+          <div class="fb-explanation" id="fb-explanation"></div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="submit-btn" disabled>Submit Answer</button>
+        </div>
+      </div>
+
+      <div id="summary">
+        <div class="score-label">Today's Score</div>
+        <div class="score" id="summary-score">0 / 5</div>
+        <div class="score-message" id="summary-message"></div>
+        <div class="actions" style="justify-content: center;">
+          <button class="primary" id="retry-btn">Review Today's Quiz Again</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="source-note">
+      A new set of 5 questions is generated automatically each day.<br>
+      Come back tomorrow for a fresh quiz.
+    </div>
+  </div>
+
+<script>
+  // ---------------------------------------------------------------------
+  // Question bank
+  // ---------------------------------------------------------------------
+  const QUESTIONS = [
+    {
+      category: 'accounting',
+      question: 'Under the basic accounting equation, what does the formula "Assets = Liabilities + Equity" represent?',
+      options: [
+        'A company\'s total resources are financed either by debt or by owners’ investment',
+        'A company’s profit equals its revenue minus its expenses',
+        'A company’s cash flow equals net income plus depreciation',
+        'A company’s tax liability equals taxable income times the tax rate'
+      ],
+      correct: 0,
+      hint: 'Think about where the money to buy "assets" ultimately comes from.',
+      explanation: 'The accounting equation is the foundation of double-entry bookkeeping and the balance sheet. Everything a company owns (assets) was paid for either by borrowing money (liabilities) or by funds the owners put in or the business earned and kept (equity). Every transaction keeps this equation in balance — that’s why it’s called "balancing the books."'
+    },
+    {
+      category: 'accounting',
+      question: 'Which financial statement shows a company’s revenues, expenses, and net income over a period of time?',
+      options: [
+        'Balance Sheet',
+        'Statement of Cash Flows',
+        'Income Statement',
+        'Statement of Retained Earnings'
+      ],
+      correct: 2,
+      hint: 'This statement is sometimes called a "P&L" — profit and loss.',
+      explanation: 'The Income Statement (Profit & Loss Statement) reports performance over a period (e.g., a quarter or year), starting with revenue and subtracting expenses to arrive at net income. By contrast, the Balance Sheet is a snapshot at a single point in time, and the Statement of Cash Flows tracks cash movements across operating, investing, and financing activities.'
+    },
+    {
+      category: 'accounting',
+      question: 'A company purchases office supplies on credit. Which journal entry correctly records this transaction?',
+      options: [
+        'Debit Cash, Credit Supplies',
+        'Debit Supplies, Credit Accounts Payable',
+        'Debit Accounts Payable, Credit Supplies',
+        'Debit Supplies, Credit Cash'
+      ],
+      correct: 1,
+      hint: '"On credit" means no cash changed hands yet — the company now owes money.',
+      explanation: 'Buying supplies increases an asset account (Supplies), which is recorded with a debit. Because the purchase was made "on credit" (i.e., on account), the company now has an obligation to pay later, which increases the liability account Accounts Payable, recorded with a credit. Debits = Credits, so the entry balances.'
+    },
+    {
+      category: 'accounting',
+      question: 'Under the accrual basis of accounting, when should revenue be recognized?',
+      options: [
+        'When cash is received from the customer',
+        'When the invoice is printed',
+        'When the goods or services are delivered, regardless of when cash is received',
+        'At the end of the fiscal year only'
+      ],
+      correct: 2,
+      hint: 'Accrual accounting matches activity to the period it actually happened in, not when cash moves.',
+      explanation: 'The revenue recognition principle under accrual accounting states that revenue is recorded when it is earned — i.e., when goods are delivered or services performed — regardless of when payment is received. This contrasts with cash basis accounting, where revenue is only recorded when cash actually changes hands. Accrual accounting gives a more accurate picture of a company’s financial performance during a period.'
+    },
+    {
+      category: 'accounting',
+      question: 'Which depreciation method allocates an equal amount of an asset’s cost to expense in each year of its useful life?',
+      options: [
+        'Double-declining balance method',
+        'Units-of-production method',
+        'Sum-of-the-years’-digits method',
+        'Straight-line method'
+      ],
+      correct: 3,
+      hint: 'Picture a graph of depreciation expense over time — this method produces a flat, horizontal line.',
+      explanation: 'The straight-line method spreads depreciation evenly: (Cost – Salvage Value) ÷ Useful Life = annual depreciation expense, which stays the same each year. Accelerated methods like double-declining balance front-load larger expenses in early years, while units-of-production ties depreciation to actual usage rather than time.'
+    },
+    {
+      category: 'accounting',
+      question: 'A company uses the FIFO (First-In, First-Out) inventory method. During a period of rising prices, what is the effect on reported net income compared to LIFO?',
+      options: [
+        'FIFO results in lower net income than LIFO',
+        'FIFO results in higher net income than LIFO',
+        'FIFO and LIFO always produce identical net income',
+        'Net income is unaffected by inventory costing method'
+      ],
+      correct: 1,
+      hint: 'FIFO assumes the oldest (and during inflation, cheapest) inventory costs are expensed first as Cost of Goods Sold.',
+      explanation: 'During inflation, FIFO assumes the oldest, lower-cost inventory is sold first, which results in a lower Cost of Goods Sold (COGS) and therefore higher gross profit and net income. LIFO assumes the newest, higher-cost inventory is sold first, producing a higher COGS and lower net income (but often a tax advantage, since taxable income is lower).'
+    },
+    {
+      category: 'accounting',
+      question: 'What is the primary purpose of an adjusting entry made at the end of an accounting period?',
+      options: [
+        'To correct errors made by the bookkeeper during data entry',
+        'To record transactions that have not yet occurred',
+        'To update account balances for items like accrued expenses, accrued revenue, prepaid items, and depreciation before financial statements are prepared',
+        'To close out all temporary accounts permanently'
+      ],
+      correct: 2,
+      hint: 'These entries make sure revenues and expenses are recorded in the period they actually relate to.',
+      explanation: 'Adjusting entries ensure that revenues and expenses are recognized in the period they actually occurred (matching principle), even if cash hasn’t been exchanged. Common examples include recording accrued salaries owed but not yet paid, recognizing earned revenue not yet billed, allocating prepaid insurance to expense over time, and recording depreciation. Closing entries, which zero out temporary accounts, are a separate step performed after adjustments.'
+    },
+    {
+      category: 'accounting',
+      question: 'On a classified balance sheet, in which order are assets typically listed?',
+      options: [
+        'Alphabetically by account name',
+        'In order of liquidity, from most liquid to least liquid',
+        'In order of purchase date, oldest first',
+        'Randomly, since order does not matter'
+      ],
+      correct: 1,
+      hint: 'Cash is almost always the very first line item on a balance sheet — why?',
+      explanation: 'Assets are listed in order of liquidity — how quickly they can be converted to cash. Current assets (cash, receivables, inventory) come first because they are expected to be converted to cash or used up within one year, followed by long-term assets like property, plant & equipment, and intangibles, which are far less liquid.'
+    },
+    {
+      category: 'accounting',
+      question: 'A "contra asset" account, such as Accumulated Depreciation, normally has what type of balance?',
+      options: [
+        'A debit balance, increasing the value of the related asset',
+        'A credit balance, reducing the value of the related asset',
+        'It has no balance — it is only used for disclosure',
+        'A debit balance equal to the asset’s original cost'
+      ],
+      correct: 1,
+      hint: '"Contra" means "against" — this account works against the normal balance of its related account.',
+      explanation: 'Contra asset accounts carry a normal credit balance, which is the opposite of a typical asset’s debit balance, and they reduce the net reported value of the related asset on the balance sheet. Accumulated Depreciation offsets the cost of property, plant & equipment to show the asset’s net book value (Cost – Accumulated Depreciation).'
+    },
+    {
+      category: 'accounting',
+      question: 'Which of the following would be classified as an operating activity on the Statement of Cash Flows?',
+      options: [
+        'Cash received from issuing common stock',
+        'Cash paid to purchase a new factory building',
+        'Cash collected from customers for sales of products',
+        'Cash paid to repay the principal on a long-term loan'
+      ],
+      correct: 2,
+      hint: 'Operating activities relate to the core, day-to-day business of generating revenue and incurring expenses.',
+      explanation: 'Operating activities reflect the cash effects of transactions related to a company’s main revenue-producing operations, such as cash received from customers and cash paid to suppliers and employees. Issuing stock and repaying loan principal are financing activities, while purchasing a factory building is an investing activity.'
+    },
+    {
+      category: 'finance',
+      question: 'What does Net Present Value (NPV) measure when evaluating a potential investment?',
+      options: [
+        'The total revenue the project will generate over its life',
+        'The difference between the present value of cash inflows and the present value of cash outflows',
+        'The number of years required to recover the initial investment',
+        'The accounting profit reported in the first year of the project'
+      ],
+      correct: 1,
+      hint: 'NPV discounts all future cash flows back to today’s dollars and subtracts the initial cost.',
+      explanation: 'NPV equals the sum of all expected future cash flows, each discounted back to present value using a required rate of return (discount rate), minus the initial investment. A positive NPV means the project is expected to add value to the company (returns exceed the cost of capital), while a negative NPV means it would destroy value.'
+    },
+    {
+      category: 'finance',
+      question: 'If a project has an Internal Rate of Return (IRR) of 12% and the company’s required rate of return (cost of capital) is 9%, what should the company generally do?',
+      options: [
+        'Reject the project because IRR exceeds the cost of capital',
+        'Accept the project because IRR exceeds the cost of capital',
+        'It is impossible to decide without knowing the project’s payback period',
+        'Accept the project only if NPV is negative'
+      ],
+      correct: 1,
+      hint: 'IRR is the discount rate at which NPV = 0. Compare it to the "hurdle rate."',
+      explanation: 'A project should generally be accepted when its IRR exceeds the company’s cost of capital (the minimum acceptable return, or "hurdle rate"), because this implies the project earns more than what it costs the company to raise the funds — it should also have a positive NPV at that discount rate. If IRR were below the cost of capital, the project would likely destroy value and should be rejected.'
+    },
+    {
+      category: 'finance',
+      question: 'What is the "time value of money" concept based on?',
+      options: [
+        'Money loses value over time due to inflation only',
+        'A dollar received today is worth more than a dollar received in the future because it can be invested to earn a return',
+        'Money has the same value regardless of when it is received',
+        'Future cash flows are always worth more than present cash flows'
+      ],
+      correct: 1,
+      hint: 'Think about what you could do with $100 today versus $100 a year from now.',
+      explanation: 'The time value of money reflects the principle that money available now can be invested to earn interest or returns, making it more valuable than the same amount received later. This is the basis for discounting future cash flows (using present value formulas) and compounding present amounts (using future value formulas) in financial analysis.'
+    },
+    {
+      category: 'finance',
+      question: 'A company’s Weighted Average Cost of Capital (WACC) combines the cost of which two main sources of financing?',
+      options: [
+        'Cash and inventory',
+        'Debt and equity',
+        'Revenue and expenses',
+        'Current assets and current liabilities'
+      ],
+      correct: 1,
+      hint: 'This metric is often used as the discount rate in NPV calculations — it represents the "blended" cost of a company’s funding.',
+      explanation: 'WACC blends the after-tax cost of debt and the cost of equity, weighted by their proportions in the company’s overall capital structure. It represents the minimum return a company must earn on its existing assets to satisfy its creditors, owners, and other capital providers, and is commonly used as the discount rate for evaluating new investments.'
+    },
+    {
+      category: 'finance',
+      question: 'When market interest rates rise, what generally happens to the price of existing fixed-rate bonds?',
+      options: [
+        'Bond prices rise along with interest rates',
+        'Bond prices fall, because new bonds offer higher coupon rates, making older bonds less attractive',
+        'Bond prices remain unchanged regardless of interest rates',
+        'Bond prices become impossible to determine'
+      ],
+      correct: 1,
+      hint: 'Bond prices and interest rates move in opposite directions.',
+      explanation: 'Bond prices and market interest rates have an inverse relationship. If rates rise, newly issued bonds offer higher coupon payments, making existing bonds with lower fixed coupons less attractive at their current price. To remain competitive, the price of existing bonds falls so that their effective yield rises to match prevailing market rates.'
+    },
+    {
+      category: 'finance',
+      question: 'A company’s current ratio is calculated as:',
+      options: [
+        'Net Income ÷ Total Assets',
+        'Current Assets ÷ Current Liabilities',
+        'Total Liabilities ÷ Total Equity',
+        'Cash ÷ Current Liabilities'
+      ],
+      correct: 1,
+      hint: 'This ratio measures a company’s ability to cover its short-term obligations with its short-term resources.',
+      explanation: 'The current ratio (Current Assets ÷ Current Liabilities) is a liquidity ratio that measures whether a company has enough short-term assets to cover its short-term liabilities. A ratio above 1.0 generally indicates the company can meet its near-term obligations, though an excessively high ratio could suggest inefficient use of assets. The "quick ratio" is a stricter version that excludes inventory from current assets.'
+    },
+    {
+      category: 'finance',
+      question: 'Return on Equity (ROE) measures:',
+      options: [
+        'How efficiently a company uses its total assets to generate sales',
+        'How much profit a company generates for each dollar of shareholders’ equity invested',
+        'The percentage of a company’s revenue that becomes operating profit',
+        'How quickly a company collects cash from its customers'
+      ],
+      correct: 1,
+      hint: 'The formula is Net Income ÷ Shareholders’ Equity.',
+      explanation: 'ROE (Net Income ÷ Average Shareholders’ Equity) shows how effectively a company is using the money invested by its shareholders to generate profit. A higher ROE generally indicates more efficient use of equity capital, though it can also be inflated by high financial leverage (more debt relative to equity), so it’s often analyzed alongside other ratios like ROA and debt-to-equity.'
+    },
+    {
+      category: 'finance',
+      question: 'In the Capital Asset Pricing Model (CAPM), what does a stock’s "beta" measure?',
+      options: [
+        'The company’s total market capitalization',
+        'The volatility (systematic risk) of a stock’s returns relative to the overall market',
+        'The company’s dividend payout ratio',
+        'The company’s annual revenue growth rate'
+      ],
+      correct: 1,
+      hint: 'A beta of 1.0 means the stock tends to move in line with the market.',
+      explanation: 'Beta measures a stock’s sensitivity to overall market movements (systematic risk) — a beta of 1.0 means the stock tends to move with the market, a beta greater than 1.0 indicates higher volatility than the market, and a beta less than 1.0 indicates lower volatility. CAPM uses beta to estimate a stock’s expected return: Expected Return = Risk-Free Rate + Beta × (Market Return – Risk-Free Rate).'
+    },
+    {
+      category: 'finance',
+      question: 'What is "working capital"?',
+      options: [
+        'Total assets minus total liabilities',
+        'Current assets minus current liabilities',
+        'Cash on hand plus marketable securities only',
+        'Total revenue minus total expenses'
+      ],
+      correct: 1,
+      hint: 'It reflects the short-term funds available to run day-to-day operations.',
+      explanation: 'Working capital (Current Assets – Current Liabilities) measures the short-term financial health and operational efficiency of a company. Positive working capital means a company has enough short-term assets to cover its short-term obligations and fund ongoing operations, while negative working capital can signal potential liquidity problems (though it’s normal for some business models, like grocery retailers).'
+    },
+    {
+      category: 'finance',
+      question: 'A bond is said to be trading "at a premium" when:',
+      options: [
+        'Its market price is below its face value',
+        'Its market price is above its face value',
+        'Its coupon rate is below the market interest rate',
+        'It has defaulted on interest payments'
+      ],
+      correct: 1,
+      hint: 'Compare the bond’s price to its "par" or face value — a premium means it costs more than that.',
+      explanation: 'A bond trades at a premium when its market price exceeds its face (par) value, which typically happens when the bond’s coupon rate is higher than current market interest rates — investors are willing to pay more for the higher fixed interest payments. Conversely, a bond trades at a "discount" (below face value) when its coupon rate is lower than prevailing market rates.'
+    },
+    {
+      category: 'finance',
+      question: 'Diversification in an investment portfolio primarily helps to reduce which type of risk?',
+      options: [
+        'Systematic (market) risk',
+        'Unsystematic (company-specific) risk',
+        'Inflation risk only',
+        'Interest rate risk only'
+      ],
+      correct: 1,
+      hint: 'This is the risk that can be "diversified away" by holding many different investments.',
+      explanation: 'Diversification reduces unsystematic risk — risk specific to an individual company or industry (e.g., a lawsuit, product recall, or management scandal) — because losses in one holding can be offset by gains or stability in others. Systematic risk (market-wide factors like recessions, interest rate changes, or geopolitical events) affects nearly all investments and cannot be eliminated through diversification alone.'
+    },
+    {
+      category: 'accounting',
+      question: 'What does "Goodwill" represent on a company’s balance sheet?',
+      options: [
+        'Cash donations the company has made to charity',
+        'The excess amount paid to acquire a company over the fair value of its identifiable net assets',
+        'The total value of a company’s brand name as determined by employees',
+        'A liability representing future customer refunds'
+      ],
+      correct: 1,
+      hint: 'This typically arises only when one company acquires another.',
+      explanation: 'Goodwill is an intangible asset that arises in an acquisition when the purchase price exceeds the fair value of the acquired company’s identifiable net assets (assets minus liabilities). It often reflects intangible value like brand reputation, customer relationships, or expected synergies. Under GAAP, goodwill is not amortized but is tested at least annually for impairment.'
+    },
+    {
+      category: 'accounting',
+      question: 'Which principle states that expenses should be recorded in the same period as the revenues they helped generate?',
+      options: [
+        'The going concern principle',
+        'The matching principle',
+        'The conservatism principle',
+        'The materiality principle'
+      ],
+      correct: 1,
+      hint: 'This principle pairs costs with the income they helped create.',
+      explanation: 'The matching principle requires that expenses be recognized in the same period as the related revenues, regardless of when cash is paid. For example, the cost of goods sold is recorded in the same period as the sale of those goods, and a salesperson’s commission is expensed in the period the related sale occurs. This principle underlies many accrual accounting adjustments.'
+    },
+    {
+      category: 'accounting',
+      question: 'A company’s "Retained Earnings" balance represents:',
+      options: [
+        'Cash set aside in a separate bank account for emergencies',
+        'The cumulative net income earned by the company over its life, minus any dividends paid to shareholders',
+        'The total amount of money shareholders originally invested in the company',
+        'The current year’s revenue only'
+      ],
+      correct: 1,
+      hint: 'It accumulates over time and is reduced when dividends are distributed.',
+      explanation: 'Retained Earnings is an equity account that tracks the cumulative profits a company has earned since inception, less any amounts distributed to shareholders as dividends. It is not a pool of cash sitting in a bank account — it simply represents reinvested earnings that have funded the company’s assets and operations over time.'
+    },
+    {
+      category: 'finance',
+      question: 'What is the main difference between the payback period method and NPV when evaluating an investment?',
+      options: [
+        'Payback period accounts for the time value of money, while NPV does not',
+        'Payback period measures how long it takes to recover the initial investment but ignores cash flows after that point and the time value of money, while NPV considers all cash flows and discounts them',
+        'NPV only considers the first year of cash flows',
+        'They always produce the same investment decision'
+      ],
+      correct: 1,
+      hint: 'One method is simple but ignores what happens to cash flows after the investment is "paid back" and ignores discounting.',
+      explanation: 'The payback period simply measures how long it takes for cumulative cash inflows to equal the initial investment — it’s easy to calculate but ignores both the time value of money and any cash flows occurring after the payback point. NPV is more rigorous: it discounts every cash flow over the project’s entire life back to present value, providing a more complete picture of whether a project creates value.'
+    },
+    {
+      category: 'finance',
+      question: 'If a company increases its financial leverage (takes on more debt relative to equity), what is a likely effect on its Return on Equity (ROE) during profitable periods?',
+      options: [
+        'ROE will always decrease',
+        'ROE may increase, because debt financing can amplify returns to equity holders when the return on investments exceeds the cost of debt',
+        'ROE is completely unaffected by the debt-to-equity ratio',
+        'ROE becomes negative automatically'
+      ],
+      correct: 1,
+      hint: 'This is the concept of "financial leverage" — it can magnify gains, but also magnify losses.',
+      explanation: 'Financial leverage can amplify ROE when a company earns a return on its assets that exceeds the after-tax cost of its debt — the "extra" profit accrues to a smaller equity base, boosting ROE. However, leverage is a double-edged sword: in unprofitable periods, the same fixed debt obligations can amplify losses and depress ROE even further, increasing financial risk.'
+    },
+    {
+      category: 'accounting',
+      question: 'Which of the following is considered a "non-cash" expense that is added back to net income when calculating cash flow from operations using the indirect method?',
+      options: [
+        'Cost of goods sold',
+        'Depreciation and amortization',
+        'Cash paid for wages',
+        'Cash dividends paid'
+      ],
+      correct: 1,
+      hint: 'This expense reduces net income on the income statement, but no cash actually leaves the company when it’s recorded.',
+      explanation: 'Depreciation and amortization reduce net income on the income statement but do not involve an actual outflow of cash in the current period (the cash was spent when the asset was originally purchased). Under the indirect method of preparing the Statement of Cash Flows, these non-cash expenses are added back to net income to reconcile it to actual cash generated by operations.'
+    },
+    {
+      category: 'finance',
+      question: 'What does the Dividend Discount Model (DDM) use to estimate the intrinsic value of a stock?',
+      options: [
+        'The company’s total assets divided by shares outstanding',
+        'The present value of all expected future dividend payments',
+        'The company’s most recent quarterly revenue',
+        'The stock’s 52-week trading range'
+      ],
+      correct: 1,
+      hint: 'This model is most useful for valuing stable, dividend-paying companies.',
+      explanation: 'The Dividend Discount Model values a stock as the present value of all expected future dividends, discounted at an appropriate required rate of return. A common simplified version, the Gordon Growth Model, assumes dividends grow at a constant rate forever: Value = D1 ÷ (r – g), where D1 is next year’s expected dividend, r is the required return, and g is the constant growth rate.'
+    },
+    {
+      category: 'accounting',
+      question: 'What is the purpose of a "trial balance"?',
+      options: [
+        'To list all customers who currently owe the company money',
+        'To verify that total debits equal total credits across all accounts before preparing financial statements',
+        'To calculate the company’s tax liability for the year',
+        'To forecast next year’s budget'
+      ],
+      correct: 1,
+      hint: 'It’s a checkpoint used before financial statements are prepared, to catch certain bookkeeping errors.',
+      explanation: 'A trial balance lists every account and its ending debit or credit balance to confirm that total debits equal total credits, a fundamental requirement of double-entry bookkeeping. While it doesn’t catch every type of error (e.g., a transaction recorded to the wrong account but with equal debits and credits would still balance), it’s an essential step before adjusting entries and financial statements are prepared.'
+    },
+    {
+      category: 'finance',
+      question: 'What does a high debt-to-equity ratio generally indicate about a company?',
+      options: [
+        'The company has no liabilities at all',
+        'The company relies more heavily on debt financing relative to shareholder equity, which can increase financial risk',
+        'The company is guaranteed to be unprofitable',
+        'The company’s stock price will definitely decrease'
+      ],
+      correct: 1,
+      hint: 'This ratio compares how a company’s assets are financed: by creditors versus by owners.',
+      explanation: 'The debt-to-equity ratio (Total Liabilities ÷ Total Equity) shows the proportion of financing that comes from creditors versus shareholders. A high ratio means a company is using significant debt to finance its operations and growth, which can amplify returns but also increases fixed interest obligations and financial risk, especially during downturns or rising interest rate environments. What counts as "high" varies considerably by industry.'
+    }
+  ];
+
+  const QUESTIONS_PER_DAY = 5;
+
+  // ---------------------------------------------------------------------
+  // Deterministic daily selection
+  // ---------------------------------------------------------------------
+  function todayKey() {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(now.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // Simple string hash -> 32-bit seed
+  function hashString(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+    }
+    return h >>> 0;
+  }
+
+  // Mulberry32 seeded PRNG
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0;
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function getDailyQuestions(dateKey) {
+    const rng = mulberry32(hashString(dateKey));
+    const indices = QUESTIONS.map((_, i) => i);
+    // Fisher-Yates shuffle using seeded RNG
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices.slice(0, QUESTIONS_PER_DAY).map(i => QUESTIONS[i]);
+  }
+
+  // ---------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------
+  const dateKey = todayKey();
+  const dailyQuestions = getDailyQuestions(dateKey);
+  const storageKey = `acctfin-quiz-${dateKey}`;
+
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.answers) && parsed.answers.length === dailyQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) { /* ignore corrupt storage */ }
+    return {
+      currentIndex: 0,
+      answers: new Array(dailyQuestions.length).fill(null),
+      score: 0,
+      completed: false
+    };
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch (e) { /* localStorage unavailable */ }
+  }
+
+  // ---------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------
+  const els = {
+    dateLine: document.getElementById('date-line'),
+    quizArea: document.getElementById('quiz-area'),
+    summary: document.getElementById('summary'),
+    categoryBadge: document.getElementById('category-badge'),
+    progressText: document.getElementById('progress-text'),
+    progressFill: document.getElementById('progress-fill'),
+    questionText: document.getElementById('question-text'),
+    options: document.getElementById('options'),
+    hintToggle: document.getElementById('hint-toggle'),
+    hintBox: document.getElementById('hint-box'),
+    feedback: document.getElementById('feedback'),
+    fbTitle: document.getElementById('fb-title'),
+    fbExplanation: document.getElementById('fb-explanation'),
+    submitBtn: document.getElementById('submit-btn'),
+    summaryScore: document.getElementById('summary-score'),
+    summaryMessage: document.getElementById('summary-message'),
+    retryBtn: document.getElementById('retry-btn')
+  };
+
+  let selectedOption = null;
+  let locked = false;
+
+  function init() {
+    const d = new Date(dateKey + 'T00:00:00Z');
+    els.dateLine.textContent = d.toLocaleDateString(undefined, {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    if (state.completed) {
+      showSummary();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function renderQuestion() {
+    const q = dailyQuestions[state.currentIndex];
+    const qNum = state.currentIndex + 1;
+    const total = dailyQuestions.length;
+
+    els.categoryBadge.textContent = q.category === 'finance' ? 'Finance' : 'Accounting';
+    els.categoryBadge.className = 'category-badge ' + q.category;
+    els.progressText.textContent = `Question ${qNum} of ${total}`;
+    els.progressFill.style.width = `${((qNum - 1) / total) * 100}%`;
+
+    els.questionText.textContent = q.question;
+
+    els.hintBox.textContent = q.hint;
+    els.hintBox.classList.remove('visible');
+    els.hintToggle.textContent = 'Show hint';
+
+    els.feedback.classList.remove('visible', 'correct-fb', 'incorrect-fb');
+
+    selectedOption = state.answers[state.currentIndex];
+    locked = selectedOption !== null;
+
+    els.options.innerHTML = '';
+    q.options.forEach((optText, idx) => {
+      const btn = document.createElement('div');
+      btn.className = 'option';
+      btn.setAttribute('role', 'button');
+      btn.setAttribute('tabindex', '0');
+      btn.innerHTML = `<span class="opt-letter">${'ABCD'[idx]}</span><span>${optText}</span>`;
+      btn.addEventListener('click', () => selectOption(idx));
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectOption(idx); }
+      });
+      els.options.appendChild(btn);
+    });
+
+    if (locked) {
+      revealAnswer(q, selectedOption);
+    } else {
+      els.submitBtn.disabled = true;
+    }
+
+    updateSubmitButtonLabel();
+  }
+
+  function selectOption(idx) {
+    if (locked) return;
+    selectedOption = idx;
+    const optionEls = els.options.querySelectorAll('.option');
+    optionEls.forEach((el, i) => el.classList.toggle('selected', i === idx));
+    els.submitBtn.disabled = false;
+  }
+
+  function revealAnswer(q, chosenIdx) {
+    const optionEls = els.options.querySelectorAll('.option');
+    optionEls.forEach((el, i) => {
+      el.classList.add('locked');
+      el.classList.remove('selected');
+      if (i === q.correct) {
+        el.classList.add('correct');
+      } else if (i === chosenIdx) {
+        el.classList.add('incorrect');
+      }
+    });
+
+    const isCorrect = chosenIdx === q.correct;
+    els.feedback.classList.add('visible', isCorrect ? 'correct-fb' : 'incorrect-fb');
+    els.fbTitle.textContent = isCorrect ? 'Correct!' : 'Incorrect';
+    els.fbExplanation.textContent = q.explanation;
+
+    els.submitBtn.disabled = false;
+  }
+
+  function updateSubmitButtonLabel() {
+    if (locked) {
+      const isLast = state.currentIndex === dailyQuestions.length - 1;
+      els.submitBtn.textContent = isLast ? 'See Results' : 'Next Question';
+    } else {
+      els.submitBtn.textContent = 'Submit Answer';
+    }
+  }
+
+  function handlePrimaryClick() {
+    const q = dailyQuestions[state.currentIndex];
+
+    if (!locked) {
+      // Submitting an answer
+      if (selectedOption === null) return;
+      state.answers[state.currentIndex] = selectedOption;
+      if (selectedOption === q.correct) {
+        state.score += 1;
+      }
+      saveState();
+      locked = true;
+      revealAnswer(q, selectedOption);
+      updateSubmitButtonLabel();
+      return;
+    }
+
+    // Moving on
+    if (state.currentIndex < dailyQuestions.length - 1) {
+      state.currentIndex += 1;
+      saveState();
+      renderQuestion();
+    } else {
+      state.completed = true;
+      saveState();
+      showSummary();
+    }
+  }
+
+  function showSummary() {
+    els.quizArea.style.display = 'none';
+    els.summary.classList.add('visible');
+    els.progressFill.style.width = '100%';
+
+    const total = dailyQuestions.length;
+    els.summaryScore.textContent = `${state.score} / ${total}`;
+
+    const pct = state.score / total;
+    let msg;
+    if (pct === 1) {
+      msg = 'Perfect score! You’ve mastered today’s concepts.';
+    } else if (pct >= 0.8) {
+      msg = 'Great job! You have a strong grasp of these topics.';
+    } else if (pct >= 0.5) {
+      msg = 'Good effort — review the explanations above to sharpen your knowledge.';
+    } else {
+      msg = 'Keep practicing! Review the explanations and try again tomorrow.';
+    }
+    els.summaryMessage.textContent = msg;
+  }
+
+  function reviewQuiz() {
+    state.currentIndex = 0;
+    els.quizArea.style.display = '';
+    els.summary.classList.remove('visible');
+    renderQuestion();
+  }
+
+  els.submitBtn.addEventListener('click', handlePrimaryClick);
+  els.retryBtn.addEventListener('click', reviewQuiz);
+  els.hintToggle.addEventListener('click', () => {
+    const visible = els.hintBox.classList.toggle('visible');
+    els.hintToggle.textContent = visible ? 'Hide hint' : 'Show hint';
+  });
+
+  init();
+</script>
+</body>
+</html>
