@@ -98,9 +98,9 @@ def test_mock_suggestion_that_posts_the_subtotal_is_caught_by_validation(monkeyp
 def test_broken_register_is_blocked_by_the_checks_the_demo_promises():
     report, client = parse("our-lady-grace_payroll_2026-10-15_BROKEN.csv"), CLIENTS["our-lady-grace"]
     _, checks, _ = checks_for(report, propose_from_rules(report, client), client)
-    assert checks["balanced"].status == "fail"
-    assert checks["totals_tie"].status == "fail"
-    assert checks["dates"].status == "fail" and "09/30/2026" in checks["dates"].detail
+    # the one $25 error trips both the overall and the per-entity balance check, so four checks fail in total
+    assert {k for k, v in checks.items() if v.status == "fail"} == {"balanced", "entities_balanced", "totals_tie", "dates"}
+    assert "09/30/2026" in checks["dates"].detail
     assert checks["mapping_complete"].status == "pass"        # the mapping itself is fine; the data is not
 
 

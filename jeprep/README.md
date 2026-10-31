@@ -18,7 +18,7 @@ pip install -r requirements-dev.txt
 Open <http://127.0.0.1:8000>, pick a fake user and role, and follow the [demo script](#demo-script). No Okta account and no API key are needed. To start over, stop the server and delete the `data/` folder.
 
 ```bash
-python -m pytest         # 177 tests: validation, allocation math, export formats, redaction, security, end-to-end flows
+python -m pytest         # 178 tests: validation, allocation math, export formats, redaction, security, end-to-end flows
 ```
 
 ## Demo script
@@ -36,7 +36,7 @@ Sample files live in `demo_data/` (and are offered as downloads on the Upload st
 | 7 | Pat | New job → *Our Lady of Grace*, 10/16-10/31/2026 → upload `..._NEW-LAYOUT.csv` | A new payroll provider's column names: **no saved mapping matches**. Only the employee ID / department / date columns are recognised by rules. |
 | 8 | Pat | **Suggest a mapping** → open *Show exactly what would be sent to the model* | Offline this is a clearly labelled **MOCK**; with `ANTHROPIC_API_KEY` it calls Claude. The panel shows names/IDs replaced by `EMP_001` / `ID_001`. The suggestion spots `Total Earnings` as a subtotal and sets it to *Ignore* (posting it would double count). Nothing is applied: each AI/mock line must be ticked *Reviewed*, then submitted. |
 | 9 | **Sam Senior** (Reviewer) | Review queue → approve the mapping | Saved as **version 3**. Re-uploading the same layout now matches it automatically. |
-| 10 | Pat | New job → `..._BROKEN.csv` (10/01-10/15) | Three checks **fail** (out of balance, doesn't tie to the report's own totals, a row dated 09/30). **Export is blocked.** |
+| 10 | Pat | New job → `..._BROKEN.csv` (10/01-10/15) | Four checks **fail**: out of balance overall and for the entity (the $25), doesn't tie to the report's own totals, and a row dated 09/30. **Export is blocked.** |
 | 11 | **Alex Admin** (Admin) | Audit log; Clients → edit allocation % | Who/what/when, mapping version, file SHA-256, approver; hash chain verified. Percent changes are logged and drive the next allocated journal. |
 
 ## How it works
@@ -145,8 +145,20 @@ app/
   web/                           FastAPI routers (wizard, review, admin, login); templates/ static/
   demo/                          synthetic data generator and DB seed
 demo_data/                       generated sample registers (synthetic)
+artifact/                        single-file browser walkthrough: template, build script, engine-parity check
 tests/                           pytest suite
 ```
+
+## Browser walkthrough (no server needed)
+
+`artifact/` builds a single self-contained HTML page that walks through the same flow in the browser, for people who can't run the Python app. It is a **JavaScript re-implementation of the engine** (rules, mock suggestion, allocation, the five checks, Intacct/QBO export, hash-chained audit log), seeded from the same synthetic data. It has no server, no real sign-in, no live Claude call and no file downloads (it offers *Copy CSV* instead).
+
+```bash
+python artifact/build.py --out /tmp/page.html --expected /tmp/expected.json
+node artifact/verify_engine.js /tmp/page.html /tmp/expected.json   # 125 comparisons vs the Python engine
+```
+
+`verify_engine.js` replays nine cases through the JS engine and compares them with the Python engine's output: mapping lines, journal lines, every check's status and message, tie-out rows, the redacted sample rows, and the exported CSV byte for byte. Re-run it after changing either engine.
 
 ## What is real, what is mocked
 

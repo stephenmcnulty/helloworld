@@ -126,3 +126,9 @@ def test_allocation_config_problems_are_reported(multi_client):
     assert multi_client.allocation_problems() == []
     multi_client.entities[1] = type(multi_client.entities[1])("SCHOOL", "School", D("25"), False, "SCH")
     assert any("not 100%" in p for p in multi_client.allocation_problems())
+
+
+def test_split_parts_are_always_two_decimal_places():
+    """Stored/hashed/displayed amounts must have one canonical form: 20450.00, never 20450."""
+    for amount in (D("20450.00"), D("100.01"), D("-777.77"), D("0.00")):
+        assert all(str(v) == f"{v:.2f}" for v in split_amount(amount, WEIGHTS).values()), amount

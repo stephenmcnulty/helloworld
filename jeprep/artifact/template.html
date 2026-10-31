@@ -1,0 +1,1186 @@
+<title>Journal Entry Prep</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a working surface, not a document. Amber demo strip, ink-blue top bar with the acting-as switcher,
+   a five-step rail, then one panel at a time. Money sits in tabular mono so columns line up like a ledger. */
+:root {
+  --bg: #f2f5f9; --panel: #ffffff; --panel-2: #f7f9fc; --ink: #17212f; --muted: #566376; --line: #d8e0ea;
+  --accent: #1f4fb4; --accent-ink: #ffffff; --accent-soft: #e4ecfb;
+  --top: #1b3556; --top-ink: #eaf1fb;
+  --ok: #17663a; --ok-bg: #e6f5ec; --ok-line: #b5ddc5;
+  --warn: #8a5300; --warn-bg: #fff3d9; --warn-line: #efd596;
+  --bad: #a11d1d; --bad-bg: #fdeaea; --bad-line: #efbcbc;
+  --info: #1e43a8; --info-bg: #e7eefc; --info-line: #c2d2f5;
+  --demo-bg: #fff0b3; --demo-ink: #5a4300; --demo-line: #e3b400;
+  --ai: #5b2bb5; --ai-bg: #ece3fc; --rules: #075985; --rules-bg: #dff1fb; --code-bg: #0f1b2d; --code-ink: #d7e3f4;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e141c; --panel: #161e29; --panel-2: #1b2431; --ink: #e5ebf3; --muted: #9aa7b8; --line: #2a3546;
+    --accent: #6f9bff; --accent-ink: #0c1424; --accent-soft: #1f2d4b;
+    --top: #0a1018; --top-ink: #dbe6f5;
+    --ok: #6fd39a; --ok-bg: #12301f; --ok-line: #24553a;
+    --warn: #f1bf62; --warn-bg: #33270d; --warn-line: #5e4714;
+    --bad: #ff8d8d; --bad-bg: #371617; --bad-line: #66292b;
+    --info: #9bbaff; --info-bg: #17254a; --info-line: #2c437a;
+    --demo-bg: #3d3207; --demo-ink: #f6dd7a; --demo-line: #7a6200;
+    --ai: #c3a6ff; --ai-bg: #2a1c4d; --rules: #7fcdf2; --rules-bg: #0f2c3b; --code-bg: #0a1018; --code-ink: #cfdcee;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e141c; --panel: #161e29; --panel-2: #1b2431; --ink: #e5ebf3; --muted: #9aa7b8; --line: #2a3546;
+  --accent: #6f9bff; --accent-ink: #0c1424; --accent-soft: #1f2d4b;
+  --top: #0a1018; --top-ink: #dbe6f5;
+  --ok: #6fd39a; --ok-bg: #12301f; --ok-line: #24553a;
+  --warn: #f1bf62; --warn-bg: #33270d; --warn-line: #5e4714;
+  --bad: #ff8d8d; --bad-bg: #371617; --bad-line: #66292b;
+  --info: #9bbaff; --info-bg: #17254a; --info-line: #2c437a;
+  --demo-bg: #3d3207; --demo-ink: #f6dd7a; --demo-line: #7a6200;
+  --ai: #c3a6ff; --ai-bg: #2a1c4d; --rules: #7fcdf2; --rules-bg: #0f2c3b; --code-bg: #0a1018; --code-ink: #cfdcee;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14.5px; line-height: 1.5; }
+a { color: var(--accent); }
+h1 { font-size: 1.45rem; line-height: 1.2; margin: 0 0 .35rem; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: 1.05rem; margin: 0 0 .6rem; }
+h3 { font-size: .95rem; margin: 1rem 0 .4rem; }
+p { margin: .4rem 0; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--panel-2); border: 1px solid var(--line); padding: 0 .3em; border-radius: 4px; }
+.muted { color: var(--muted); } .small { font-size: .82rem; } .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; font-family: var(--mono); font-size: .88em; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+.demo-banner { background: var(--demo-bg); color: var(--demo-ink); border-bottom: 2px solid var(--demo-line); font-size: .86rem; }
+.demo-banner .wrap { padding-block: .45rem; }
+.top { background: var(--top); color: var(--top-ink); }
+.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.4rem; padding-block: .6rem; }
+.brand { font-weight: 600; letter-spacing: -.01em; display: flex; align-items: center; gap: .5rem; }
+.brand b { background: var(--top-ink); color: var(--top); border-radius: 5px; padding: 0 .35rem; font-family: var(--mono); font-size: .8rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: .15rem; flex: 1 1 auto; min-width: 0; }
+.tab { background: none; border: 0; color: inherit; font: inherit; padding: .35rem .7rem; border-radius: 6px; cursor: pointer; opacity: .85; }
+.tab:hover { background: rgba(255,255,255,.1); opacity: 1; }
+.tab[aria-current="page"] { background: rgba(255,255,255,.18); opacity: 1; font-weight: 600; }
+.tab .pill { background: var(--bad); color: #fff; border-radius: 99px; font-size: .72rem; padding: 0 .4rem; margin-left: .3rem; }
+.acting { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .85rem; }
+.acting select { max-width: 11.5rem; }
+main.wrap { padding-block: 1.1rem 3rem; display: grid; gap: 1rem; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.1rem; min-width: 0; }
+.panel.demo { border-color: var(--demo-line); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .8rem 1.1rem; }
+.scroll { overflow-x: auto; max-width: 100%; }
+.row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.spread { justify-content: space-between; }
+/* controls */
+select, input[type=text], input[type=date], input[type=number] { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .38rem .5rem; max-width: 100%; min-width: 0; }
+label.f { display: grid; gap: .25rem; font-weight: 500; font-size: .88rem; }
+.choice { display: flex; gap: .5rem; align-items: baseline; padding: .2rem 0; font-weight: 400; }
+fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 0; padding: .5rem .8rem .7rem; min-width: 0; }
+legend { font-weight: 600; font-size: .88rem; padding-inline: .3rem; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn { font: inherit; font-weight: 500; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: .45rem .85rem; cursor: pointer; }
+.btn:hover { background: var(--panel-2); border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.quiet { border-color: transparent; background: none; color: var(--accent); }
+.btn.sm { padding: .25rem .6rem; font-size: .84rem; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+/* stepper */
+.steps { display: grid; grid-template-columns: repeat(5, 1fr); list-style: none; margin: 0; padding: 0; }
+.step { position: relative; display: grid; justify-items: center; gap: .2rem; font-size: .84rem; color: var(--muted); text-align: center; }
+.step::before { content: ""; position: absolute; top: 15px; right: 50%; width: 100%; height: 3px; background: var(--line); }
+.step:first-child::before { display: none; }
+.step.done::before, .step.current::before { background: var(--accent); }
+.step button { all: unset; display: grid; justify-items: center; gap: .2rem; cursor: pointer; }
+.step button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.step .dot { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); border: 2px solid var(--line); font-weight: 600; }
+.step.done .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.step.current .dot { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.step.viewing .lbl { color: var(--ink); font-weight: 600; }
+/* notices */
+.note { border: 1px solid; border-radius: 8px; padding: .6rem .85rem; }
+.note.info { background: var(--info-bg); border-color: var(--info-line); color: var(--info); }
+.note.ok { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); }
+.note.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
+.note.bad { background: var(--bad-bg); border-color: var(--bad-line); color: var(--bad); }
+.note ul { margin: .3rem 0 0; padding-left: 1.2rem; }
+/* chips */
+.chip { display: inline-block; font-size: .74rem; font-weight: 600; padding: .05rem .5rem; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); border-color: var(--bad-line); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
+.chip.info { background: var(--info-bg); color: var(--info); border-color: var(--info-line); }
+.chip.ai { background: var(--ai-bg); color: var(--ai); border-color: transparent; }
+.chip.rules { background: var(--rules-bg); color: var(--rules); border-color: transparent; }
+/* summary strip */
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem 1rem; }
+.summary dt { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.summary dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--panel-2); padding: .45rem .6rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.num { text-align: right; }
+td { padding: .45rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tfoot td { font-weight: 600; border-top: 2px solid var(--line); background: var(--panel-2); }
+tr.bad td { background: var(--bad-bg); } tr.interco td { background: var(--warn-bg); }
+table.map select { width: 100%; min-width: 5.2rem; max-width: 10.5rem; font-size: .82rem; padding: .28rem; }
+table.map td.nm { min-width: 11rem; max-width: 17rem; }
+tr.unassigned td { background: var(--warn-bg); } tr.review td:first-child { box-shadow: inset 4px 0 0 var(--ai); }
+.rat { color: var(--ai); font-size: .8rem; margin-top: .15rem; }
+.conf.low { color: var(--bad); font-weight: 600; }
+/* checks */
+.checks { display: grid; gap: .5rem; padding: 0; margin: 0; list-style: none; }
+.check { display: flex; gap: .7rem; border: 1px solid; border-radius: 8px; padding: .55rem .8rem; }
+.check .ic { flex: none; width: 1.4rem; height: 1.4rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: var(--panel); }
+.check.pass { background: var(--ok-bg); border-color: var(--ok-line); } .check.pass .ic { background: var(--ok); }
+.check.fail { background: var(--bad-bg); border-color: var(--bad-line); } .check.fail .ic { background: var(--bad); }
+.check.warn { background: var(--warn-bg); border-color: var(--warn-line); } .check.warn .ic { background: var(--warn); }
+.check p { margin: .1rem 0 0; font-size: .86rem; }
+pre.code { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; padding: .8rem 1rem; overflow: auto; max-height: 22rem; margin: .5rem 0; font-family: var(--mono); font-size: .78rem; line-height: 1.45; }
+.scn { text-align: left; display: grid; gap: .15rem; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: .65rem .8rem; cursor: pointer; font: inherit; }
+.scn:hover { border-color: var(--accent); }
+.scn b { font-weight: 600; } .scn span { font-size: .82rem; color: var(--muted); }
+.scn.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.file { display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between; align-items: center; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.file:last-child { border-bottom: 0; }
+.file.suggested { background: var(--accent-soft); margin-inline: -.5rem; padding-inline: .5rem; border-radius: 6px; }
+@media (max-width: 640px) {
+  .step .lbl { font-size: .7rem; } .acting select { max-width: 9rem; }
+  .panel { padding: .8rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div id="root"></div>
+
+<script>
+/*DATA*/
+</script>
+<script>
+/*ENGINE-START*/
+const ROLES = ['amount', 'employee_name', 'employee_id', 'department', 'pay_date', 'ignore'];
+const ROLE_LABELS = { amount: 'Amount → journal line', employee_name: 'Employee name', employee_id: 'Employee ID', department: 'Department', pay_date: 'Pay date', ignore: 'Ignore (not posted)' };
+const SIDES = ['debit', 'credit'];
+const GENESIS = '0'.repeat(64);
+const MOCK_LABEL = 'MOCK SUGGESTION - no AI model was called. Built-in keyword heuristic, for demo only.';
+
+/* ---------- small helpers ---------- */
+const pad2 = n => String(n).padStart(2, '0');
+function normHeader(h) { return String(h).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+function layoutSig(headers) { return headers.map(normHeader).sort().join('|'); }
+function parseMoney(raw) {
+  if (raw === null || raw === undefined) return null;
+  let t = String(raw).trim();
+  if (!t || t.length > 24) return null;
+  let neg = false;
+  if (t.startsWith('(') && t.endsWith(')')) { neg = true; t = t.slice(1, -1); }
+  t = t.replace(/[$, ]/g, '');
+  if (t.endsWith('-')) { neg = true; t = t.slice(0, -1); }
+  if (!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(t)) return null;
+  let sign = 1;
+  if (t[0] === '-') { sign = -1; t = t.slice(1); } else if (t[0] === '+') t = t.slice(1);
+  const [i, f = ''] = t.split('.');
+  const frac = (f + '000').slice(0, 3);
+  let cents = parseInt(i || '0', 10) * 100 + parseInt(frac.slice(0, 2), 10);
+  if (parseInt(frac[2], 10) >= 5) cents += 1;
+  return (neg ? -1 : 1) * sign * cents;
+}
+function fmtMoney(c) {
+  const s = Math.abs(c);
+  return (c < 0 ? '-' : '') + Math.floor(s / 100).toLocaleString('en-US') + '.' + pad2(s % 100);
+}
+const plain = c => (c < 0 ? '-' : '') + Math.floor(Math.abs(c) / 100) + '.' + pad2(Math.abs(c) % 100);
+function mkDate(y, m, d) {
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+  return `${y}-${pad2(m)}-${pad2(d)}`;
+}
+function parseDate(raw) {
+  let t = String(raw ?? '').trim();
+  if (!t) return null;
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(t)) t = t.slice(0, 10);
+  let m;
+  if ((m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/.exec(t))) return mkDate(+m[1], +m[2], +m[3]);
+  if ((m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/.exec(t))) return mkDate(+m[3], +m[1], +m[2]);
+  if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/.exec(t))) return mkDate(2000 + +m[3], +m[1], +m[2]);
+  return null;
+}
+const usDate = iso => `${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.slice(0, 4)}`;
+const ymd = iso => iso.replace(/-/g, '');
+
+/* ---------- SHA-256 (sync, for audit hashes and file fingerprints) ---------- */
+const K256 = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256(str) {
+  const bytes = new TextEncoder().encode(str);
+  const len = bytes.length;
+  const buf = new Uint8Array(((len + 9 + 63) >> 6) << 6);
+  buf.set(bytes); buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  dv.setUint32(buf.length - 4, (len * 8) >>> 0);
+  dv.setUint32(buf.length - 8, Math.floor((len * 8) / 4294967296));
+  const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  const w = new Uint32Array(64);
+  const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let off = 0; off < buf.length; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (h + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + K256[i] + w[i]) >>> 0;
+      const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    [a, b, c, d, e, f, g, h].forEach((v, i) => { H[i] = (H[i] + v) >>> 0; });
+  }
+  return H.map(x => x.toString(16).padStart(8, '0')).join('');
+}
+
+/* ---------- parsing ---------- */
+class ParseError extends Error {}
+function parseCSVText(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = []; let row = [], cur = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else quoted = false; } else cur += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ',') { row.push(cur); cur = ''; }
+    else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+    else if (ch !== '\r') cur += ch;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows.map(r => r.map(c => c.trim()));
+}
+function findHeaderRow(grid) {
+  const scan = grid.slice(0, 15);
+  const counts = scan.map(r => r.filter(Boolean).length);
+  const widest = counts.reduce((a, b) => Math.max(a, b), 0);
+  if (widest < 2) throw new ParseError('No table was found in the file (need at least two columns).');
+  const needed = Math.max(2, Math.ceil(0.6 * widest));
+  for (let i = 0; i < scan.length; i++) {
+    const cells = scan[i].filter(Boolean);
+    if (cells.length >= needed && cells.filter(c => parseMoney(c) === null).length / cells.length >= 0.8) return i;
+  }
+  throw new ParseError('Could not find a header row in the first 15 rows of the file.');
+}
+function cleanHeaders(raw) {
+  const seen = {};
+  return raw.map((h, i) => {
+    const name = h.replace(/\s+/g, ' ').trim() || `Column ${i + 1}`;
+    const k = name.toLowerCase(); seen[k] = (seen[k] || 0) + 1;
+    return seen[k] === 1 ? name : `${name} (${seen[k]})`;
+  });
+}
+function parseReport(text, { maxRows = 20000, maxColumns = 100 } = {}) {
+  let grid = parseCSVText(text);
+  if (grid.length > maxRows + 50) throw new ParseError(`The report has more than ${maxRows.toLocaleString('en-US')} rows, which is over the limit.`);
+  const width = grid.reduce((a, r) => Math.max(a, r.length), 0);
+  grid = grid.map(r => r.concat(Array(width - r.length).fill('')));
+  const hi = findHeaderRow(grid);
+  const titleLines = grid.slice(0, hi).filter(r => r.some(Boolean)).map(r => r.filter(Boolean).join(' '));
+  const rawHeaders = cleanHeaders(grid[hi]);
+  const body = grid.slice(hi + 1);
+  const keep = [];
+  for (let i = 0; i < width; i++) if (grid[hi][i] || body.some(r => r[i])) keep.push(i);
+  if (keep.length > maxColumns) throw new ParseError(`The report has more than ${maxColumns} columns, which is over the limit.`);
+  const headers = keep.map(i => rawHeaders[i]);
+  const rows = []; let totals = null, skipped = 0;
+  for (const raw of body) {
+    const row = keep.map(i => raw[i]);
+    if (!row.some(Boolean)) { skipped++; continue; }
+    const label = row.slice(0, 2).filter(Boolean)[0] || '';
+    if (/^\s*sub\s*-?\s*totals?\b/i.test(label)) skipped++;
+    else if (/^\s*(grand\s+)?totals?\s*:?\s*$/i.test(label)) { totals = {}; headers.forEach((h, i) => { totals[h] = row[i]; }); }
+    else rows.push(row);
+  }
+  if (!rows.length) throw new ParseError('The report has a header but no data rows.');
+  return {
+    headers, rows, totals, titleLines, skipped, rowCount: rows.length, signature: layoutSig(headers),
+    col(c) { const i = headers.indexOf(c); return rows.map(r => r[i]); },
+    amounts(c) { return this.col(c).map(parseMoney).filter(v => v !== null); },
+    total(c) { return this.amounts(c).reduce((a, b) => a + b, 0); },
+    stated(c) { return totals ? parseMoney(totals[c] ?? '') : null; },
+    isAmount(c) { const ne = this.col(c).filter(v => v.trim()); return ne.length > 0 && ne.every(v => parseMoney(v) !== null); },
+    amountColumns() { return headers.filter(h => this.isAmount(h)); },
+  };
+}
+
+/* ---------- client configuration helpers ---------- */
+function prepClient(raw) {
+  const c = JSON.parse(JSON.stringify(raw));
+  c.acct = {}; c.accounts.forEach(a => { c.acct[a.no] = a; });
+  return c;
+}
+const acctNos = c => Object.keys(c.acct).sort();
+const acctForCat = (c, cat) => acctNos(c).find(n => c.acct[n].category === cat) || '';
+const payingEntity = c => c.entities.find(e => e.paying) || c.entities[0] || null;
+const entityOf = (c, code) => c.entities.find(e => e.code === code) || null;
+function defaultFundFor(c, code) {
+  const e = entityOf(c, code);
+  if (e && e.fund && c.funds[e.fund]) return e.fund;
+  return Object.keys(c.funds)[0] || '';
+}
+function defaultDims(c) { const p = payingEntity(c); const ent = p ? p.code : ''; return [ent, defaultFundFor(c, ent)]; }
+function lineTypeFor(c, no) {
+  const a = c.acct[no];
+  if (!a) return '';
+  if (a.category.endsWith('_expense')) return 'expense';
+  if (a.category === 'cash') return 'cash';
+  if (a.category === 'due_from') return 'asset';
+  if (a.category.endsWith('_payable') || a.category === 'due_to') return 'liability';
+  return 'other';
+}
+function allocationProblems(c) {
+  const out = [];
+  if (c.entities.length < 2) out.push('fewer than two entities are configured');
+  const total = c.entities.reduce((a, e) => a + Math.round(e.pct * 100), 0);
+  if (total !== 10000) out.push(`allocation percentages add up to ${total / 100}%, not 100%`);
+  if (c.entities.filter(e => e.paying).length !== 1) out.push('exactly one entity must be marked as the paying entity');
+  [['due-from', c.dueFrom], ['due-to', c.dueTo]].forEach(([l, a]) => { if (!c.acct[a]) out.push(`the ${l} (inter-entity) account is not set to a valid GL account`); });
+  return out;
+}
+
+/* ---------- mapping lines ---------- */
+const newLine = (col, p = {}) => ({ source_column: col, role: '', line_type: '', side: '', gl_account: '', entity: '', fund: '', offset_account: '', memo: '', origin: 'manual', confidence: null, rationale: '', reviewed: false, ...p });
+const needsReview = l => (l.origin === 'ai' || l.origin === 'mock') && !l.reviewed;
+function lineProblems(l, c) {
+  if (!l.role) return ['no role assigned'];
+  if (!ROLES.includes(l.role)) return [`unknown role ${l.role}`];
+  if (l.role !== 'amount') return [];
+  const out = [];
+  if (!['expense', 'liability', 'cash', 'asset', 'other'].includes(l.line_type)) out.push('line type missing');
+  if (!SIDES.includes(l.side)) out.push('debit/credit side missing');
+  if (!l.gl_account) out.push('GL account missing');
+  else if (!c.acct[l.gl_account]) out.push(`GL account ${l.gl_account} is not in the client's chart of accounts`);
+  if (l.offset_account && !c.acct[l.offset_account]) out.push(`offset account ${l.offset_account} is not in the client's chart of accounts`);
+  if (!l.entity) out.push('entity missing'); else if (!entityOf(c, l.entity)) out.push(`entity ${l.entity} is not configured for this client`);
+  if (!l.fund) out.push('fund missing'); else if (!c.funds[l.fund]) out.push(`fund ${l.fund} is not configured for this client`);
+  return out;
+}
+const isPostable = (l, c) => l.role === 'amount' && lineProblems(l, c).length === 0;
+
+/* ---------- deterministic rules ---------- */
+const EE = '((ee|employee) )?', ER = '(er|employer|company) ';
+const RULES = [
+  { name: 'employee name', rx: '^((employee|emp|worker|staff|payee) )?name$|^(employee|worker|staff)$', role: 'employee_name' },
+  { name: 'employee id', rx: '^((employee|emp|worker|staff|payee) )?(id|number|no|num)$|^ssn$', role: 'employee_id' },
+  { name: 'department', rx: '^(dept|department|cost cent(er|re)|division)( (code|name))?$', role: 'department' },
+  { name: 'pay date', rx: '^(pay|check|payment|paid) date$|^date paid$', role: 'pay_date' },
+  { name: 'employer payroll tax', rx: `^${ER}(fica|social security|medicare|ss|payroll tax(es)?|tax(es)?)( .*)?$`, role: 'amount', cat: 'payroll_tax_expense', lt: 'expense', side: 'debit', off: 'fica_payable', memo: 'Employer payroll taxes' },
+  { name: 'employer health', rx: `^${ER}(health|medical|dental|insurance|benefits?)( .*)?$`, role: 'amount', cat: 'benefits_expense', lt: 'expense', side: 'debit', off: 'health_payable', memo: 'Employer health benefits' },
+  { name: 'employer retirement', rx: `^${ER}(403 ?b|401 ?k|retirement|pension|match)( .*)?$`, role: 'amount', cat: 'retirement_expense', lt: 'expense', side: 'debit', off: 'retirement_payable', memo: 'Employer retirement match' },
+  { name: 'gross wages', rx: '^(gross( pay| wages| earnings| salary)?|total gross|regular (pay|wages)|salary|salaries|wages)$', role: 'amount', cat: 'salary_expense', lt: 'expense', side: 'debit', off: '', memo: 'Gross wages' },
+  { name: 'federal withholding', rx: '^(federal|fed|fit)( income)?( tax| w h| wh| withholding)?( withheld)?$', role: 'amount', cat: 'fed_wh_payable', lt: 'liability', side: 'credit', off: '', memo: 'Federal income tax withheld' },
+  { name: 'state withholding', rx: '^(state|st|sit)( income)?( tax| w h| wh| withholding)?( withheld)?$', role: 'amount', cat: 'state_wh_payable', lt: 'liability', side: 'credit', off: '', memo: 'State income tax withheld' },
+  { name: 'employee fica', rx: `^${EE}(fica|social security|medicare|ss)( tax)?$`, role: 'amount', cat: 'fica_payable', lt: 'liability', side: 'credit', off: '', memo: 'Employee FICA withheld' },
+  { name: 'employee health', rx: `^${EE}(health|medical|dental|insurance)( deduction| ded| premium)?$`, role: 'amount', cat: 'health_payable', lt: 'liability', side: 'credit', off: '', memo: 'Employee health deduction' },
+  { name: 'employee retirement', rx: `^${EE}(403 ?b|401 ?k|retirement|pension)( deduction| ded| contribution)?$`, role: 'amount', cat: 'retirement_payable', lt: 'liability', side: 'credit', off: '', memo: 'Employee retirement deduction' },
+  { name: 'net pay', rx: '^(net( pay| wages| check)?|take home( pay)?)$', role: 'amount', cat: 'cash', lt: 'cash', side: 'credit', off: '', memo: 'Net pay disbursed' },
+].map(r => ({ ...r, re: new RegExp(r.rx) }));
+const matchRule = h => { const n = normHeader(h); return RULES.find(r => r.re.test(n)) || null; };
+function proposeFromRules(report, c) {
+  const [entity, fund] = defaultDims(c);
+  return report.headers.map(h => {
+    const r = matchRule(h);
+    if (!r || (r.role === 'amount' && !report.isAmount(h))) return newLine(h);
+    if (r.role !== 'amount') return newLine(h, { role: r.role, origin: 'rules', rationale: `Matched built-in rule: ${r.name}` });
+    return newLine(h, { role: 'amount', line_type: r.lt, side: r.side, gl_account: acctForCat(c, r.cat), entity, fund,
+      offset_account: r.off ? acctForCat(c, r.off) : '', memo: r.memo, origin: 'rules', rationale: `Matched built-in rule: ${r.name}` });
+  });
+}
+
+/* ---------- mock suggestion (keyword heuristic - NOT an AI model) ---------- */
+const hasW = (n, ...ws) => ws.some(w => new RegExp('\\b' + w + '\\b').test(n));
+function findSubtotals(report) {
+  if (report.rowCount < 3) return {};
+  const cols = report.amountColumns(), series = {};
+  cols.forEach(c => { series[c] = report.amounts(c); });
+  const out = {};
+  for (const target of cols) {
+    const t = series[target];
+    if (!t.length || !t.some(x => x !== 0)) continue;
+    const others = cols.filter(c => c !== target && series[c].length === t.length && series[c].some(x => x !== 0));
+    for (let i = 0; i < others.length; i++) for (let j = i + 1; j < others.length; j++) {
+      const a = series[others[i]], b = series[others[j]];
+      if (t.every((z, k) => a[k] + b[k] === z)) out[target] = [others[i], others[j]];
+    }
+  }
+  return out;
+}
+function mockLines(report, c) {
+  const [entity, fund] = defaultDims(c), subs = findSubtotals(report), lines = [];
+  const amount = (h, lt, side, cat, off, memo, conf, why) => newLine(h, { role: 'amount', line_type: lt, side, gl_account: acctForCat(c, cat), entity, fund,
+    offset_account: off ? acctForCat(c, off) : '', memo, origin: 'mock', confidence: conf, rationale: 'MOCK: ' + why });
+  for (const h of report.headers) {
+    const n = normHeader(h);
+    const employer = hasW(n, 'er', 'employer', 'org', 'organization', 'organisation', 'company');
+    if (!report.isAmount(h)) {
+      if (hasW(n, 'name', 'payee')) lines.push(newLine(h, { role: 'employee_name', origin: 'mock', confidence: 0.8, rationale: "MOCK: header contains 'name'" }));
+      else if (hasW(n, 'date')) lines.push(newLine(h, { role: 'pay_date', origin: 'mock', confidence: 0.7, rationale: "MOCK: header contains 'date'" }));
+      else if (hasW(n, 'id', 'number', 'no', 'ssn') || n.endsWith(' id')) lines.push(newLine(h, { role: 'employee_id', origin: 'mock', confidence: 0.7, rationale: 'MOCK: header looks like an ID' }));
+      else if (hasW(n, 'dept', 'department', 'centre', 'center', 'division')) lines.push(newLine(h, { role: 'department', origin: 'mock', confidence: 0.7, rationale: 'MOCK: header looks like a department' }));
+      else lines.push(newLine(h, { origin: 'mock', rationale: 'MOCK: no keyword matched - assign a role yourself' }));
+      continue;
+    }
+    if (subs[h]) {
+      const [a, b] = subs[h];
+      lines.push(newLine(h, { role: 'ignore', origin: 'mock', confidence: 0.85, rationale: `MOCK: every row equals '${a}' + '${b}', so this looks like a subtotal; posting it would double count` }));
+    } else if (hasW(n, 'disbursed', 'net', 'take', 'home') && !employer) lines.push(amount(h, 'cash', 'credit', 'cash', '', 'Net pay disbursed', 0.8, 'header says net/disbursed amount -> cash'));
+    else if (hasW(n, 'soc', 'social', 'medicare', 'fica', 'ss') && employer) lines.push(amount(h, 'expense', 'debit', 'payroll_tax_expense', 'fica_payable', 'Employer payroll taxes', 0.7, 'employer-side social security/Medicare -> expense with FICA payable offset'));
+    else if (hasW(n, 'soc', 'social', 'medicare', 'fica', 'ss')) lines.push(amount(h, 'liability', 'credit', 'fica_payable', '', 'Employee FICA withheld', 0.7, 'employee-side social security/Medicare -> FICA payable'));
+    else if (hasW(n, 'medical', 'health', 'dental', 'insurance') && employer) lines.push(amount(h, 'expense', 'debit', 'benefits_expense', 'health_payable', 'Employer health benefits', 0.7, 'employer-side medical -> benefits expense with payable offset'));
+    else if (hasW(n, 'medical', 'health', 'dental', 'insurance')) lines.push(amount(h, 'liability', 'credit', 'health_payable', '', 'Employee health deduction', 0.7, 'employee-side medical -> health payable'));
+    else if (hasW(n, 'annuity', '403', '401', 'retirement', 'pension', 'tsa') && employer) lines.push(amount(h, 'expense', 'debit', 'retirement_expense', 'retirement_payable', 'Employer retirement match', 0.6, 'employer-side annuity/retirement -> expense with payable offset'));
+    else if (hasW(n, 'annuity', '403', '401', 'retirement', 'pension', 'tsa')) lines.push(amount(h, 'liability', 'credit', 'retirement_payable', '', 'Employee retirement deduction', 0.6, 'employee-side annuity/retirement -> retirement payable'));
+    else if (hasW(n, 'fed', 'federal')) lines.push(amount(h, 'liability', 'credit', 'fed_wh_payable', '', 'Federal income tax withheld', 0.75, 'federal tax withheld -> payable'));
+    else if (hasW(n, 'state')) lines.push(amount(h, 'liability', 'credit', 'state_wh_payable', '', 'State income tax withheld', 0.75, 'state tax withheld -> payable'));
+    else if (hasW(n, 'housing', 'allowance', 'parsonage')) {
+      const hasHousing = !!acctForCat(c, 'housing_expense');
+      const l = amount(h, 'expense', 'debit', hasHousing ? 'housing_expense' : 'salary_expense', '', 'Clergy housing allowance', 0.55, 'allowance is compensation -> wages/housing expense (confirm the account)');
+      l.gl_account = acctForCat(c, 'housing_expense') || acctForCat(c, 'salary_expense');
+      lines.push(l);
+    } else if (hasW(n, 'comp', 'compensation', 'earnings', 'wages', 'salary', 'pay', 'gross', 'base')) lines.push(amount(h, 'expense', 'debit', 'salary_expense', '', 'Gross wages', 0.65, 'compensation/earnings -> salaries expense'));
+    else lines.push(newLine(h, { origin: 'mock', rationale: 'MOCK: amount column, but no keyword matched - assign it yourself' }));
+  }
+  return lines;
+}
+const mergeMissing = (base, extra) => { const m = {}; extra.forEach(l => { m[l.source_column] = l; }); return base.map(l => (!l.role && m[l.source_column]) ? { ...m[l.source_column] } : l); };
+function mappingProblems(lines, report, c) {
+  const by = {}; lines.forEach(l => { by[l.source_column] = l; });
+  const out = [];
+  for (const h of report.headers) {
+    const l = by[h];
+    if (!l) { out.push(`'${h}': missing from the mapping`); continue; }
+    lineProblems(l, c).forEach(p => out.push(`'${h}': ${p}`));
+    if (needsReview(l)) out.push(`'${h}': tick 'Reviewed' once you have checked this ${l.origin.toUpperCase()} suggestion`);
+  }
+  if (!lines.some(l => l.role === 'amount')) out.push('at least one column must be mapped to a journal line');
+  if (lines.filter(l => l.role === 'pay_date').length > 1) out.push('only one column can be the pay date');
+  return out;
+}
+
+/* ---------- what a model call would receive (names/IDs tokenised) ---------- */
+const NAME_HEADER = /(\bname\b|\bpayee\b)|^(employee|worker|staff|emp)$/i;
+const ID_HEADER = /\b(ssn|tin|itin)\b|social security (no|number)|((employee|emp|worker|staff|payee|person)\s*(id|number|no|num|#))|^(id|#)$|\bemp\s*#|\bworker\s*#/i;
+function piiColumns(report) {
+  const found = {};
+  for (const h of report.headers) {
+    if (ID_HEADER.test(h)) found[h] = 'ID';
+    else if (NAME_HEADER.test(h) && !report.isAmount(h)) found[h] = 'EMP';
+  }
+  const n = report.rowCount;
+  for (const h of report.headers) {
+    if (found[h]) continue;
+    const vals = report.col(h).map(v => v.trim()).filter(Boolean);
+    if (report.isAmount(h)) {
+      if (n >= 3 && vals.every(v => /^\d{4,12}$/.test(v)) && new Set(vals.map(v => v.length)).size === 1 && new Set(vals).size / vals.length >= 0.9) found[h] = 'ID';
+      continue;
+    }
+    if (!vals.length || vals.every(v => parseDate(v))) continue;
+    if (n >= 4 && new Set(vals.map(v => v.toLowerCase())).size / vals.length >= 0.8) found[h] = 'TXT';
+  }
+  return found;
+}
+function buildModelPayload(report, sample = 3) {
+  const pii = piiColumns(report), counters = {}, byVal = {}, tokenMap = {};
+  const token = (prefix, value) => {
+    const k = prefix + '|' + value.trim().toLowerCase();
+    if (!byVal[k]) { counters[prefix] = (counters[prefix] || 0) + 1; byVal[k] = `${prefix}_${String(counters[prefix]).padStart(3, '0')}`; tokenMap[byVal[k]] = value.trim(); }
+    return byVal[k];
+  };
+  const known = {};
+  for (const [col, prefix] of Object.entries(pii)) report.col(col).forEach(v => { if (v.trim()) known[v.trim()] = token(prefix, v); });
+  const scrub = text => {
+    let out = text.replace(/\b\d{3}-\d{2}-\d{4}\b/g, m => token('PII', m)).replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, m => token('PII', m));
+    Object.entries(known).sort((a, b) => b[0].length - a[0].length).forEach(([v, tok]) => { if (v.length >= 3) out = out.replace(new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), tok); });
+    return out;
+  };
+  const rows = report.rows.slice(0, sample).map(r => {
+    const o = {};
+    report.headers.forEach((h, i) => {
+      const v = r[i];
+      if (pii[h] && v.trim()) o[h] = token(pii[h], v);
+      else if (report.isAmount(h) || parseDate(v) || parseMoney(v) !== null) o[h] = v;
+      else o[h] = scrub(v);
+    });
+    return o;
+  });
+  return { payload: { columns: report.headers.map(scrub), row_count: report.rowCount, sample_rows: rows }, columns: Object.keys(pii).sort() };
+}
+
+/* ---------- allocation + journal ---------- */
+function splitAmount(cents, weights) {
+  const total = weights.reduce((a, w) => a + Math.round(w.pct * 100), 0);
+  if (total !== 10000) throw new Error(`Allocation percentages add up to ${total / 100}%, not 100%.`);
+  const sign = cents < 0 ? -1 : 1, abs = Math.abs(cents);
+  const num = weights.map(w => abs * Math.round(w.pct * 100));
+  const floors = num.map(x => Math.floor(x / 10000));
+  let left = abs - floors.reduce((a, b) => a + b, 0);
+  const order = weights.map((_, i) => i).sort((a, b) => ((num[b] % 10000) - (num[a] % 10000)) || (a - b));
+  order.slice(0, left).forEach(i => { floors[i] += 1; });
+  const out = {}; weights.forEach((w, i) => { out[w.code] = sign * floors[i]; });
+  return out;
+}
+const flip = s => (s === 'debit' ? 'credit' : 'debit');
+function buildJournal(report, mapping, c, { start, end, allocate, target }) {
+  const j = { reference: `PR-${c.id.toUpperCase()}-${ymd(end)}`.slice(0, 40), date: end, description: `Payroll register ${usDate(start)}-${usDate(end)} - ${c.name}`,
+    target, clientName: c.name, lines: [], zeroColumns: [] };
+  const drafts = [];
+  for (const ml of mapping) {
+    if (!isPostable(ml, c)) continue;
+    const total = report.total(ml.source_column);
+    if (total === 0) { j.zeroColumns.push(ml.source_column); continue; }
+    const amount = Math.abs(total), sign = total > 0 ? 1 : -1, side = sign === 1 ? ml.side : flip(ml.side), label = ml.memo || ml.source_column;
+    const make = (acct, s, kind, memo) => ({ line_no: 0, account_no: acct, account_name: c.acct[acct].name, entity: ml.entity, fund: ml.fund,
+      debit: s === 'debit' ? amount : 0, credit: s === 'credit' ? amount : 0, memo, kind, source_column: ml.source_column, sign });
+    drafts.push([ml, make(ml.gl_account, side, 'source', label)]);
+    if (ml.offset_account) drafts.push([ml, make(ml.offset_account, flip(side), 'offset', `${label} - offset`)]);
+  }
+  let lines = [];
+  for (const [ml, line] of drafts) {
+    if (allocate && line.kind === 'source' && ml.line_type === 'expense') {
+      const parts = splitAmount(line.debit - line.credit, c.entities.map(e => ({ code: e.code, pct: e.pct })));
+      for (const e of c.entities) {
+        const share = parts[e.code];
+        if (share === 0) continue;
+        lines.push({ ...line, entity: e.code, fund: (e.fund && c.funds[e.fund]) ? e.fund : line.fund, debit: share > 0 ? share : 0, credit: share < 0 ? -share : 0, memo: `${line.memo} - ${e.pct}% ${e.code}` });
+      }
+    } else lines.push(line);
+  }
+  if (allocate && allocationProblems(c).length === 0) {
+    const payer = payingEntity(c).code, net = {};
+    c.entities.forEach(e => { net[e.code] = 0; });
+    lines.forEach(l => { net[l.entity] = (net[l.entity] || 0) + l.debit - l.credit; });
+    const mk = (ent, acct, d, cr, memo) => ({ line_no: 0, account_no: acct, account_name: c.acct[acct].name, entity: ent, fund: defaultFundFor(c, ent), debit: d, credit: cr, memo, kind: 'interco', source_column: '', sign: 1 });
+    for (const [ent, n] of Object.entries(net)) {
+      if (ent === payer || n === 0) continue;
+      const a = Math.abs(n);
+      if (n > 0) { lines.push(mk(ent, c.dueTo, 0, a, `Due to ${payer} - payroll allocation`)); lines.push(mk(payer, c.dueFrom, a, 0, `Due from ${ent} - payroll allocation`)); }
+      else { lines.push(mk(ent, c.dueFrom, a, 0, `Due from ${payer} - payroll allocation`)); lines.push(mk(payer, c.dueTo, 0, a, `Due to ${ent} - payroll allocation`)); }
+    }
+  }
+  lines.forEach((l, i) => { l.line_no = i + 1; });
+  j.lines = lines;
+  j.debits = lines.reduce((a, l) => a + l.debit, 0);
+  j.credits = lines.reduce((a, l) => a + l.credit, 0);
+  return j;
+}
+function byEntity(j) {
+  const out = new Map();
+  j.lines.forEach(l => { const d = out.get(l.entity) || [0, 0]; d[0] += l.debit; d[1] += l.credit; out.set(l.entity, d); });
+  return out;
+}
+const journalHash = j => sha256(JSON.stringify({ ref: j.reference, date: j.date, desc: j.description, target: j.target, lines: j.lines.map(l => [l.account_no, l.entity, l.fund, l.debit, l.credit, l.memo]) }));
+
+/* ---------- validation ---------- */
+function tieOut(report, mapping, j) {
+  const inJ = {};
+  j.lines.forEach(l => { if (l.kind === 'source') inJ[l.source_column] = (inJ[l.source_column] || 0) + Math.abs(l.debit - l.credit) * l.sign; });
+  const rows = [], seen = new Set();
+  for (const ml of mapping) {
+    if (!['amount', 'ignore'].includes(ml.role) || seen.has(ml.source_column) || !report.headers.includes(ml.source_column)) continue;
+    if (ml.role === 'ignore' && !report.isAmount(ml.source_column)) continue;
+    seen.add(ml.source_column);
+    rows.push({ column: ml.source_column, source: report.total(ml.source_column), stated: report.stated(ml.source_column), journal: inJ[ml.source_column] || 0, note: ml.role === 'ignore' ? 'ignored - not posted' : '' });
+  }
+  return rows;
+}
+const more = (arr, n) => arr.slice(0, n).join('; ') + (arr.length > n ? `; and ${arr.length - n} more` : '');
+function runChecks(report, mapping, c, j, start, end) {
+  const tie = tieOut(report, mapping, j), checks = [];
+  { // 1 mapping complete
+    const by = {}; mapping.forEach(m => { by[m.source_column] = m; });
+    const p = [];
+    for (const h of report.headers) {
+      const ml = by[h];
+      if (!ml) { p.push(`'${h}': column is not in the approved mapping`); continue; }
+      lineProblems(ml, c).forEach(x => p.push(`'${h}': ${x}`));
+    }
+    if (!mapping.some(m => m.role === 'amount') && !p.length) p.push('no report column is mapped to a journal line');
+    checks.push(p.length ? { id: 'mapping_complete', label: 'No unmapped lines', status: 'fail', detail: more(p, 4) }
+      : { id: 'mapping_complete', label: 'No unmapped lines', status: 'pass', detail: `All ${report.headers.length} report columns have a role; every posting line has a valid account, entity and fund.` });
+  }
+  { // 2 balanced
+    const label = 'Debits equal credits', d = j.debits, cr = j.credits;
+    if (j.lines.length < 2 || d === 0) checks.push({ id: 'balanced', label, status: 'fail', detail: 'The journal has no postable lines.' });
+    else if (d !== cr) checks.push({ id: 'balanced', label, status: 'fail', detail: `Debits ${fmtMoney(d)} vs credits ${fmtMoney(cr)} - out of balance by ${fmtMoney(Math.abs(d - cr))}. The source report may not foot (gross - deductions != net) or a column is mapped to the wrong side.` });
+    else checks.push({ id: 'balanced', label, status: 'pass', detail: `Debits and credits both total ${fmtMoney(d)}.` });
+  }
+  { // 3 each entity
+    const label = 'Each entity balances on its own', ents = byEntity(j);
+    const bad = [...ents].filter(([, [d, cr]]) => d !== cr);
+    checks.push(bad.length ? { id: 'entities_balanced', label, status: 'fail', detail: bad.map(([e, [d, cr]]) => `${e} is out by ${fmtMoney(Math.abs(d - cr))} (Dr ${fmtMoney(d)} / Cr ${fmtMoney(cr)})`).join('; ') + '. Turn on allocation or map every line to one entity.' }
+      : { id: 'entities_balanced', label, status: 'pass', detail: `${ents.size} entit${ents.size === 1 ? 'y' : 'ies'} checked.` });
+  }
+  { // 4 totals tie
+    const label = 'Totals tie back to the source report', p = [];
+    for (const r of tie) {
+      if (r.stated !== null && r.source - r.stated !== 0) p.push(`'${r.column}': rows add to ${fmtMoney(r.source)} but the report's own total row says ${fmtMoney(r.stated)}`);
+      if (r.note === '' && r.source - r.journal !== 0) p.push(`'${r.column}': report ${fmtMoney(r.source)} vs journal ${fmtMoney(r.journal)}`);
+    }
+    if (p.length) checks.push({ id: 'totals_tie', label, status: 'fail', detail: more(p, 3) });
+    else {
+      const ignored = tie.filter(r => r.note && r.source !== 0), stated = tie.filter(r => r.stated !== null).length;
+      let detail = `${tie.filter(r => !r.note).length} posted columns match the journal`;
+      detail += stated ? `; ${stated} agree with the report's total row.` : "; the report has no total row to compare against.";
+      checks.push(ignored.length ? { id: 'totals_tie', label, status: 'warn', detail: detail + ' Ignored columns with non-zero totals: ' + ignored.map(r => r.column).join(', ') + '.' }
+        : { id: 'totals_tie', label, status: 'pass', detail });
+    }
+  }
+  { // 5 dates
+    const label = 'Dates fall within the selected pay period';
+    const dc = mapping.filter(m => m.role === 'pay_date' && report.headers.includes(m.source_column)).map(m => m.source_column);
+    if (start > end) checks.push({ id: 'dates', label, status: 'fail', detail: 'The period start date is after the period end date.' });
+    else if (j.date < start || j.date > end) checks.push({ id: 'dates', label, status: 'fail', detail: `Journal date ${usDate(j.date)} is outside the period.` });
+    else if (!dc.length) checks.push({ id: 'dates', label, status: 'warn', detail: `Journal date ${usDate(j.date)} is inside the period, but no pay-date column is mapped, so dates in the report could not be checked.` });
+    else {
+      let bad = 0; const outside = [];
+      report.col(dc[0]).forEach(v => { if (!v.trim()) return; const d = parseDate(v); if (!d) bad++; else if (d < start || d > end) outside.push(d); });
+      if (bad || outside.length) {
+        const bits = [];
+        if (outside.length) bits.push(`${outside.length} row(s) dated outside ${usDate(start)}-${usDate(end)} (e.g. ${[...new Set(outside.map(usDate))].sort().slice(0, 3).join(', ')})`);
+        if (bad) bits.push(`${bad} row(s) with an unreadable date`);
+        checks.push({ id: 'dates', label, status: 'fail', detail: bits.join('; ') + '.' });
+      } else checks.push({ id: 'dates', label, status: 'pass', detail: `All ${report.rowCount} pay dates and the journal date are within ${usDate(start)}-${usDate(end)}.` });
+    }
+  }
+  return { checks, tie };
+}
+const allPassed = checks => checks.every(c => c.status !== 'fail');
+
+/* ---------- export files ---------- */
+const INTACCT_COLUMNS = ['DONOTIMPORT', 'JOURNAL', 'DATE', 'REVERSEDATE', 'DESCRIPTION', 'REFERENCE_NO', 'LINE_NO', 'ACCT_NO', 'LOCATION_ID', 'DEPT_ID', 'CLASSID', 'DOCUMENT', 'MEMO', 'DEBIT', 'CREDIT', 'SOURCEENTITY', 'CURRENCY', 'STATE'];
+const QBO_COLUMNS = ['JournalNo', 'JournalDate', 'Currency', 'Memo', 'Account', 'Debits', 'Credits', 'Description', 'Name', 'Location', 'Class'];
+function safeText(v) {
+  let s = String(v).replace(/[\x00-\x1f\x7f]+/g, ' ').trim();
+  if (s && '=+-@'.includes(s[0])) s = "'" + s;
+  return s;
+}
+const amt = c => (c === 0 ? '' : plain(c));
+const csvField = f => (/[",\r\n]/.test(f) ? '"' + f.replace(/"/g, '""') + '"' : f);
+function exportJournal(j) {
+  if (!j.lines.length || j.debits !== j.credits) throw new Error('Refusing to write an unbalanced journal.');
+  const date = usDate(j.date);
+  const cols = j.target === 'intacct' ? INTACCT_COLUMNS : QBO_COLUMNS;
+  const rows = j.lines.map(l => j.target === 'intacct'
+    ? ['', 'GJ', date, '', safeText(j.description), safeText(j.reference), String(l.line_no), l.account_no, l.entity, '', l.fund, safeText(j.reference), safeText(l.memo), amt(l.debit), amt(l.credit), '', 'USD', 'Posted']
+    : [safeText(j.reference), date, 'USD', safeText(j.description), safeText(`${l.account_no} ${l.account_name}`), amt(l.debit), amt(l.credit), safeText(l.memo), '', l.entity, l.fund]);
+  const slug = j.clientName.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
+  return { filename: `JE_${slug}_${ymd(j.date)}_${j.target}.csv`, csv: [cols, ...rows].map(r => r.map(csvField).join(',')).join('\r\n') + '\r\n', rowCount: rows.length };
+}
+
+/* ---------- audit chain ---------- */
+const AUDIT_FIELDS = ['ts', 'actor_email', 'actor_name', 'actor_roles', 'action', 'client_id', 'job_id', 'mapping_version', 'file_sha256', 'details'];
+function entryHash(prev, e) { const f = {}; AUDIT_FIELDS.forEach(k => { f[k] = e[k]; }); return sha256(prev + '\n' + JSON.stringify(f)); }
+function verifyChain(entries) {
+  let prev = GENESIS;
+  for (let i = 0; i < entries.length; i++) {
+    if (entries[i].prev !== prev || entries[i].hash !== entryHash(prev, entries[i])) return { ok: false, n: entries.length, brokenAt: i + 1 };
+    prev = entries[i].hash;
+  }
+  return { ok: true, n: entries.length, brokenAt: null };
+}
+/*ENGINE-END*/
+</script>
+
+<script>
+/* ======================================================================== UI ======================================================================== */
+const STATUS_LABELS = { intake: 'Waiting for upload', needs_mapping: 'Mapping needed', mapping_submitted: 'Mapping awaiting approval', ready: 'Ready to preview', export_requested: 'Export awaiting approval', export_approved: 'Export approved', exported: 'Exported' };
+const STEP_OF = { intake: 2, needs_mapping: 3, mapping_submitted: 3, ready: 4, export_requested: 5, export_approved: 5, exported: 5 };
+const STEP_NAMES = ['Intake', 'Upload', 'Mapping', 'Preview', 'Export'];
+const TARGETS = { intacct: 'Sage Intacct', qbo: 'QuickBooks Online' };
+const USERS = [
+  { email: 'pat.preparer@demo.example', name: 'Pat Preparer', role: 'preparer' },
+  { email: 'rhea.reviewer@demo.example', name: 'Rhea Reviewer', role: 'reviewer' },
+  { email: 'sam.senior@demo.example', name: 'Sam Senior', role: 'reviewer' },
+  { email: 'alex.admin@demo.example', name: 'Alex Admin', role: 'admin' },
+];
+const PERMS = {
+  preparer: ['job.create', 'job.work', 'mapping.propose'],
+  reviewer: ['job.create', 'job.work', 'mapping.propose', 'mapping.approve', 'export.approve', 'review.queue'],
+  admin: ['admin.clients', 'audit.view'],
+};
+const SCENARIOS = [
+  { id: 'a', title: 'Saved mapping, split three ways', text: 'Our Lady of Grace, Intacct. The layout matches approved mapping v2; expenses are allocated 60/30/10.', client: 'our-lady-grace', target: 'intacct', start: '2026-10-01', end: '2026-10-15', allocate: 'yes', file: 'our-lady-grace_payroll_2026-10-15.csv' },
+  { id: 'b', title: 'New layout, suggested mapping', text: 'A new payroll provider\'s column names. No saved mapping matches, so a suggestion is requested and then reviewed.', client: 'our-lady-grace', target: 'intacct', start: '2026-10-16', end: '2026-10-31', allocate: 'yes', file: 'our-lady-grace_payroll_2026-10-31_NEW-LAYOUT.csv' },
+  { id: 'c', title: 'Broken file, export blocked', text: 'One row is dated 09/30 and one net pay is $25 too high. Four checks fail and export is blocked.', client: 'our-lady-grace', target: 'intacct', start: '2026-10-01', end: '2026-10-15', allocate: 'no', file: 'our-lady-grace_payroll_2026-10-15_BROKEN.csv' },
+  { id: 'd', title: 'First time for a client', text: 'St. Brigid Parish, QuickBooks. Built-in rules propose a mapping that a Reviewer then approves as version 1.', client: 'st-brigid', target: 'qbo', start: '2026-10-01', end: '2026-10-15', allocate: 'no', file: 'st-brigid_payroll_2026-10-15.csv' },
+];
+
+const S = { tab: 'wizard', step: null, me: { ...USERS[0] }, clients: {}, saved: [], job: null, nextJob: 1, audit: [], tamper: null, flash: null, suggest: null, scenario: null,
+  intake: { client: 'our-lady-grace', target: 'intacct', start: '2026-10-01', end: '2026-10-15', allocate: 'yes' }, own: null };
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const can = p => PERMS[S.me.role].includes(p);
+const nowIso = () => new Date().toISOString().slice(0, 19) + 'Z';
+const clientOf = id => S.clients[id];
+const money = c => (c === null || c === undefined ? '' : fmtMoney(c));
+const lc = s => String(s || '').trim().toLowerCase();
+
+function audit(action, o = {}) {
+  const actor = o.actor || S.me, prev = S.audit.length ? S.audit[S.audit.length - 1].hash : GENESIS, j = S.job;
+  const e = { ts: nowIso(), actor_email: actor.email, actor_name: actor.name, actor_roles: actor.role || '', action,
+    client_id: o.client ?? (j ? j.clientId : null), job_id: o.job ?? (j ? j.id : null), mapping_version: o.mv ?? null, file_sha256: o.sha ?? null, details: JSON.stringify(o.details || {}) };
+  e.prev = prev; e.hash = entryHash(prev, e);
+  S.audit.push(e);
+}
+function say(kind, text) { S.flash = { kind, text }; }
+function curStep(j) { return j ? STEP_OF[j.status] : 1; }
+function approvedFor(clientId) { return S.saved.filter(m => m.clientId === clientId).sort((a, b) => b.version - a.version); }
+
+/* ---------- workflow actions (mirror app/workflow.py) ---------- */
+function startJob() {
+  const f = S.intake, c = clientOf(f.client);
+  if (!c) return say('bad', 'Choose a client.');
+  if (!f.start || !f.end) return say('bad', 'Enter the pay period start and end dates.');
+  if (f.start > f.end) return say('bad', 'The pay period start date is after the end date.');
+  if (f.allocate === 'yes' && allocationProblems(c).length) return say('bad', `Allocation can't be used for ${c.name}: ${allocationProblems(c).join('; ')}. An Admin can fix this under Clients.`);
+  S.job = { id: S.nextJob++, clientId: c.id, target: f.target, start: f.start, end: f.end, allocate: f.allocate === 'yes', status: 'intake', createdBy: S.me.email, createdByName: S.me.name,
+    uploadedBy: null, file: null, fileDeleted: null, report: null, mappingRef: null, draft: null, requestedBy: null, approvedBy: null, approvedAt: null, jeHash: null, exported: null, exportedBy: null };
+  audit('job_created', { details: { target: f.target, period: `${f.start}..${f.end}`, allocate: S.job.allocate } });
+  S.step = 2; S.suggest = S.scenario ? S.scenario.file : null; S.flash = null;
+}
+function useFile(name, text) {
+  const j = S.job, c = clientOf(j.clientId);
+  if (['export_requested', 'export_approved', 'exported'].includes(j.status)) return say('bad', 'This journal is already in the export stage; start a new job to upload a different report.');
+  let report;
+  try { report = parseReport(text); } catch (e) {
+    if (!(e instanceof ParseError)) throw e;
+    audit('file_rejected', { details: { reason: e.message, name } });
+    return say('bad', e.message);
+  }
+  const sha = sha256(text);
+  if (j.file) audit('file_deleted', { sha: j.file.sha, details: { reason: 'replaced by a new upload' } });
+  j.file = { name, text, sha, size: text.length }; j.fileDeleted = null; j.report = report; j.uploadedBy = S.me.email; j.jeHash = null; j.exported = null;
+  audit('file_uploaded', { sha, details: { name, rows: report.rowCount, columns: report.headers.length } });
+  const match = approvedFor(c.id).find(m => m.signature === report.signature);
+  if (match) {
+    j.mappingRef = match; j.matched = true; j.draft = null; j.status = 'ready';
+    audit('mapping_matched', { sha, mv: match.version, details: { layout_signature: sha256(report.signature).slice(0, 16) } });
+    say('ok', `Matched a saved mapping: this report's column layout is identical to approved version ${match.version} for ${c.name}.`);
+    S.step = 3;
+  } else {
+    const lines = proposeFromRules(report, c), versions = approvedFor(c.id);
+    let notice = 'Draft proposed by built-in rules. Nothing is approved yet.';
+    if (versions.length) {
+      const prior = {}; versions[0].lines.filter(l => l.role).forEach(l => { prior[normHeader(l.source_column)] = l; });
+      let reused = 0;
+      lines.forEach((l, i) => { const p = prior[normHeader(l.source_column)]; if (p) { lines[i] = { ...p, source_column: l.source_column, origin: 'saved', reviewed: true, rationale: `Reused from approved mapping v${versions[0].version}` }; reused++; } });
+      if (reused) notice = `Draft reuses ${reused} column(s) from approved mapping v${versions[0].version}; the rest were proposed by built-in rules.`;
+    }
+    j.mappingRef = null; j.matched = false; j.draft = { lines, status: 'draft', createdBy: S.me.email, submittedBy: null, source: 'rules', notice, note: '' };
+    j.status = 'needs_mapping';
+    audit('mapping_required', { sha, details: { unrecognised_columns: lines.filter(l => !l.role).length } });
+    say('info', 'This report layout has no approved mapping yet. Review the proposed mapping below.');
+    S.step = 3;
+  }
+}
+function suggestMapping() {
+  const j = S.job, c = clientOf(j.clientId), d = j.draft;
+  const s = mockLines(j.report, c), merged = mergeMissing(d.lines, s);
+  const filled = merged.filter((l, i) => l !== d.lines[i]).length;
+  d.lines = merged; d.source = 'mock'; d.notice = MOCK_LABEL;
+  const red = buildModelPayload(j.report);
+  audit('mapping_suggested', { sha: j.file.sha, details: { engine: 'mock', lines_filled: filled, columns_redacted: red.columns, sent_to_external_model: false } });
+  say('info', `${MOCK_LABEL} ${filled} unassigned column(s) were filled in. None are approved.`);
+}
+function submitMapping() {
+  const j = S.job, c = clientOf(j.clientId), p = mappingProblems(j.draft.lines, j.report, c);
+  if (p.length) return say('bad', `The mapping isn't complete yet: ${more(p, 4)}.`);
+  j.draft.status = 'submitted'; j.draft.submittedBy = S.me.email; j.status = 'mapping_submitted';
+  audit('mapping_submitted', { sha: j.file.sha, details: { source: j.draft.source } });
+  say('ok', 'Mapping submitted. A Reviewer (not you) must approve it before a journal can be built.');
+}
+function denied(action, what) {
+  audit(action, { details: { reason: 'segregation of duties' } });
+  say('bad', `Blocked: you prepared this ${what}, so you cannot approve it. Another Reviewer must.`);
+}
+function approveMapping() {
+  const j = S.job, c = clientOf(j.clientId), d = j.draft;
+  if (!can('mapping.approve')) return say('bad', 'Only a Reviewer can approve or reject a mapping.');
+  if ([d.createdBy, d.submittedBy].some(e => lc(e) === lc(S.me.email))) return denied('mapping_approve_denied', 'mapping');
+  const version = Math.max(0, ...approvedFor(c.id).map(m => m.version)) + 1;
+  const rec = { clientId: c.id, version, signature: j.report.signature, lines: d.lines.map(l => ({ ...l })), decidedBy: S.me.email, decidedAt: nowIso(), note: d.notice };
+  S.saved.push(rec); j.mappingRef = rec; j.matched = false; j.draft = null; j.status = 'ready'; j.jeHash = null;
+  audit('mapping_approved', { sha: j.file.sha, mv: version, details: { proposed_by: d.createdBy, source: d.source } });
+  say('ok', `Mapping approved and saved as version ${version} for ${c.name}.`);
+  S.step = 4;
+}
+function rejectMapping(note) {
+  const j = S.job, d = j.draft;
+  if (!can('mapping.approve')) return say('bad', 'Only a Reviewer can approve or reject a mapping.');
+  if ([d.createdBy, d.submittedBy].some(e => lc(e) === lc(S.me.email))) return denied('mapping_reject_denied', 'mapping');
+  d.status = 'rejected'; d.note = note || 'No note left.'; j.status = 'needs_mapping';
+  audit('mapping_rejected', { sha: j.file.sha, details: { note } });
+  say('info', 'Mapping sent back to the preparer.');
+}
+function proposeChanges() {
+  const j = S.job;
+  j.draft = { lines: j.mappingRef.lines.map(l => ({ ...l, origin: 'saved', reviewed: true })), status: 'draft', createdBy: S.me.email, submittedBy: null, source: 'manual', notice: `Changes proposed to approved mapping v${j.mappingRef.version}.`, note: '' };
+  audit('mapping_change_proposed', { mv: j.mappingRef.version });
+  say('info', 'A new draft was started from the approved mapping. It only replaces it once a Reviewer approves.');
+}
+function previewOf(j) {
+  const c = clientOf(j.clientId), lines = j.mappingRef.lines;
+  const journal = buildJournal(j.report, lines, c, { start: j.start, end: j.end, allocate: j.allocate, target: j.target });
+  const { checks, tie } = runChecks(j.report, lines, c, journal, j.start, j.end);
+  return { c, lines, journal, checks, tie, ok: allPassed(checks) };
+}
+function preparersOf(j) { return [j.createdBy, j.uploadedBy, j.requestedBy].filter(Boolean); }
+function requestExport() {
+  const j = S.job, p = previewOf(j);
+  if (!p.ok) return say('bad', 'Export is blocked: fix the failing checks first.');
+  j.jeHash = journalHash(p.journal); j.status = 'export_requested'; j.requestedBy = S.me.email;
+  audit('export_requested', { sha: j.file.sha, mv: j.mappingRef.version, details: { je_hash: j.jeHash, lines: p.journal.lines.length, total: plain(p.journal.debits), checks: Object.fromEntries(p.checks.map(c => [c.id, c.status])) } });
+  say('ok', 'Sent for approval. A Reviewer other than you must approve the export.'); S.step = 5;
+}
+function approveExport() {
+  const j = S.job;
+  if (!can('export.approve')) return say('bad', 'Only a Reviewer can approve or reject an export.');
+  if (preparersOf(j).some(e => lc(e) === lc(S.me.email))) return denied('export_approve_denied', 'export');
+  const p = previewOf(j);
+  if (!p.ok) return say('bad', 'Export is blocked: the checks no longer all pass.');
+  if (journalHash(p.journal) !== j.jeHash) return say('bad', 'The journal no longer matches what was submitted for approval. Request approval again.');
+  j.status = 'export_approved'; j.approvedBy = S.me.email; j.approvedAt = nowIso();
+  audit('export_approved', { sha: j.file.sha, mv: j.mappingRef.version, details: { je_hash: j.jeHash, prepared_by: [...new Set(preparersOf(j))] } });
+  say('ok', 'Export approved. The import file can now be generated.');
+}
+function rejectExport(note) {
+  const j = S.job;
+  if (!can('export.approve')) return say('bad', 'Only a Reviewer can approve or reject an export.');
+  if (preparersOf(j).some(e => lc(e) === lc(S.me.email))) return denied('export_reject_denied', 'export');
+  j.status = 'ready'; j.jeHash = null; j.requestedBy = null; S.step = 4;
+  audit('export_rejected', { sha: j.file.sha, details: { note } });
+  say('info', 'Export sent back to the preparer.');
+}
+function generateExport(deleteAfter) {
+  const j = S.job, p = previewOf(j);
+  if (!p.ok || journalHash(p.journal) !== j.jeHash) return say('bad', 'The journal no longer matches what was approved. Request approval again.');
+  const ex = exportJournal(p.journal), sha = sha256(ex.csv);
+  j.exported = { ...ex, sha, at: nowIso(), deleteAfter, total: p.journal.debits }; j.exportedBy = S.me.email; j.status = 'exported';
+  audit('export_generated', { sha: j.file.sha, mv: j.mappingRef.version, details: { target: j.target, export_file: ex.filename, export_sha256: sha, rows: ex.rowCount, approved_by: j.approvedBy, delete_after_export: deleteAfter, posted_to_external_system: false } });
+  if (deleteAfter) { audit('file_deleted', { sha: j.file.sha, details: { reason: 'delete_after_export', kind: 'upload' } }); j.fileDeleted = 'delete after export'; j.file.text = null; j.report = null; }
+  say('ok', `Created ${ex.filename} (${ex.rowCount} lines). Nothing was posted to ${TARGETS[j.target]}.`);
+}
+
+/* ---------- view helpers ---------- */
+const chip = (t, k = '') => `<span class="chip ${k}">${esc(t)}</span>`;
+const statusChip = s => chip(STATUS_LABELS[s], { ready: 'info', export_approved: 'info', exported: 'ok', needs_mapping: 'warn', intake: 'warn', mapping_submitted: 'info', export_requested: 'info' }[s]);
+const optList = (items, cur, blank = '-') => (blank !== null ? `<option value="">${esc(blank)}</option>` : '') + items.map(([v, l]) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(l)}</option>`).join('');
+const btn = (act, label, cls = '', extra = '') => `<button class="btn ${cls}" data-act="${act}" ${extra}>${esc(label)}</button>`;
+function summary(j) {
+  const c = clientOf(j.clientId);
+  return `<dl class="summary panel">
+    <div><dt>Job</dt><dd>#${j.id}</dd></div><div><dt>Client</dt><dd>${esc(c.name)}</dd></div><div><dt>Target system</dt><dd>${TARGETS[j.target]}</dd></div>
+    <div><dt>Report</dt><dd>Payroll Register</dd></div><div><dt>Pay period</dt><dd>${usDate(j.start)} - ${usDate(j.end)}</dd></div>
+    <div><dt>Allocation</dt><dd>${j.allocate ? 'Across entities' : 'None'}</dd></div><div><dt>Status</dt><dd>${statusChip(j.status)}</dd></div></dl>`;
+}
+function stepper() {
+  const j = S.job, reached = curStep(j), viewing = S.step || reached;
+  return `<ol class="steps" aria-label="Progress">${STEP_NAMES.map((n, i) => {
+    const k = i + 1, state = k < reached ? 'done' : k === reached ? 'current' : 'todo';
+    const ok = j ? (k === 1 || (k <= reached && !(k === 4 && !j.mappingRef))) : k === 1;
+    const inner = `<span class="dot">${state === 'done' ? '✓' : k}</span><span class="lbl">${n}</span>`;
+    return `<li class="step ${state}${viewing === k ? ' viewing' : ''}"${viewing === k ? ' aria-current="step"' : ''}>${ok ? `<button data-act="step:${k}" aria-label="Go to step ${k}, ${n}">${inner}</button>` : inner}</li>`;
+  }).join('')}</ol>`;
+}
+function hint() {
+  const j = S.job; if (!j) return '';
+  const other = (excl) => USERS.find(u => u.role === 'reviewer' && !excl.some(e => lc(e) === lc(u.email)));
+  const switchBtn = u => u ? ` ${btn(`as:${u.email}:reviewer`, `Act as ${u.name}`, 'sm')}` : '';
+  const m = {
+    intake: () => `Next: upload the payroll register for ${esc(clientOf(j.clientId).name)}.`,
+    needs_mapping: () => (j.draft && j.draft.status === 'rejected' ? 'The Reviewer sent the mapping back. Reopen it, fix it and submit again.' : 'Next: review the proposed mapping, ask for a suggestion if columns are unassigned, then submit it.'),
+    mapping_submitted: () => `Waiting for a Reviewer other than ${esc(j.draft.createdBy)}.${switchBtn(other([j.draft.createdBy, j.draft.submittedBy]))}`,
+    ready: () => 'Next: check the validation results, then request export approval.',
+    export_requested: () => `Waiting for a Reviewer who did not prepare this journal.${switchBtn(other(preparersOf(j)))}`,
+    export_approved: () => `Approved by ${esc(j.approvedBy)}. Next: generate the import file.`,
+    exported: () => 'Done. The import file is ready to copy.',
+  }[j.status]();
+  return `<div class="note info" role="status">${m}</div>`;
+}
+
+/* ---------- views ---------- */
+function viewIntake() {
+  const f = S.intake, cs = Object.values(S.clients), j = S.job;
+  const c = clientOf(f.client), probs = c ? allocationProblems(c) : [];
+  return `${j ? `<div class="note warn">Job #${j.id} is in progress. Starting a new one replaces it on this page (the audit log keeps its history). ${btn('reset-job', 'Discard job #' + j.id, 'sm')}</div>` : ''}
+  <section class="panel"><h2>Try a scenario</h2><p class="muted small">Each one fills in the intake form and points you at the matching sample file.</p>
+    <div class="grid2">${SCENARIOS.map(s => `<button class="scn${S.scenario && S.scenario.id === s.id ? ' on' : ''}" data-act="scn:${s.id}"><b>${esc(s.title)}</b><span>${esc(s.text)}</span></button>`).join('')}</div></section>
+  <section class="panel"><h1>Step 1 - Intake</h1><p class="muted">A few questions so the right mapping, target format and checks are used.</p>
+    <div class="grid2" style="margin-top:.8rem">
+      <label class="f" for="in-client" style="grid-column:1/-1">Client<select id="in-client" data-bind="client">${optList(cs.map(x => [x.id, x.name + (allocationProblems(x).length ? '' : ' - allocation configured')]), f.client, 'Choose a client...')}</select></label>
+      <fieldset><legend>Target system</legend>${Object.entries(TARGETS).map(([k, v]) => `<label class="choice"><input type="radio" name="target" id="in-t-${k}" data-bind="target" value="${k}"${f.target === k ? ' checked' : ''}> ${v}</label>`).join('')}</fieldset>
+      <label class="f" for="in-report">Report type<select id="in-report"><option>Payroll Register</option></select></label><span></span>
+      <label class="f" for="in-start">Pay period start<input type="date" id="in-start" data-bind="start" value="${esc(f.start)}"></label>
+      <label class="f" for="in-end">Pay period end<input type="date" id="in-end" data-bind="end" value="${esc(f.end)}"></label>
+      <fieldset style="grid-column:1/-1"><legend>Allocate across entities or funds?</legend>
+        <label class="choice"><input type="radio" name="alloc" id="in-a-no" data-bind="allocate" value="no"${f.allocate === 'no' ? ' checked' : ''}> No <span class="muted small">post each line to its mapped entity</span></label>
+        <label class="choice"><input type="radio" name="alloc" id="in-a-yes" data-bind="allocate" value="yes"${f.allocate === 'yes' ? ' checked' : ''}> Yes <span class="muted small">split expense lines by the client's percentages and add due-to / due-from lines</span></label>
+        ${f.allocate === 'yes' && probs.length ? `<p class="note bad small">Allocation can't be used for ${esc(c.name)}: ${esc(probs.join('; '))}.</p>` : ''}</fieldset></div>
+    <div class="row" style="margin-top:1rem">${btn('start', 'Continue to upload', 'primary')}</div></section>`;
+}
+function viewUpload() {
+  const j = S.job, c = clientOf(j.clientId), files = DEMO.files.filter(f => f.clientId === c.id).sort((a, b) => (b.filename === S.suggest) - (a.filename === S.suggest));
+  return `<h1>Step 2 - Upload the payroll register</h1>${summary(j)}
+  <section class="panel demo"><h2>${chip('DEMO', 'warn')} Synthetic sample files for ${esc(c.name)}</h2>
+    ${files.map(f => `<div class="file${S.suggest === f.filename ? ' suggested' : ''}"><div style="min-width:0"><b>${esc(f.title)}</b>${S.suggest === f.filename ? ' ' + chip('suggested for this scenario', 'info') : ''}<div class="muted small">${esc(f.description)} Pay period ${usDate(f.start)}-${usDate(f.end)}.</div><div class="mono muted small">${esc(f.filename)}</div></div>${btn('file:' + f.filename, 'Use this file', S.suggest === f.filename ? 'primary' : '')}</div>`).join('') || '<p class="muted">No sample files for this client.</p>'}
+    <p class="muted small">The real tool also accepts Excel; the Holy Cross sample is shown here as CSV. Match the pay period from step 1 to the file's period, or the date check will fail.</p></section>
+  <section class="panel"><h2>Or try your own CSV</h2><p class="muted small">Read in this page only; nothing is uploaded anywhere. Use synthetic data.</p>
+    <label class="f" for="own-file">CSV file<input type="file" id="own-file" accept=".csv,text/csv"></label>
+    ${j.file ? `<p class="muted small">Currently loaded: <b>${esc(j.file.name)}</b>. Loading another replaces it and re-checks the layout. ${btn('step:3', 'Continue to mapping', 'sm')}</p>` : ''}</section>`;
+}
+function originChip(l) {
+  const k = { rules: ['Rules', 'rules'], ai: ['AI suggestion', 'ai'], mock: ['MOCK suggestion', 'warn'], saved: ['Saved mapping', 'ok'], manual: ['Manual', ''] }[l.origin] || [l.origin, ''];
+  return chip(k[0], k[1]) + (l.confidence !== null && l.confidence !== undefined ? ` <span class="conf muted small${l.confidence < 0.7 ? ' low' : ''}">${Math.round(l.confidence * 100)}%</span>` : '');
+}
+function colInfo(r, h) { const am = r.isAmount(h); return am ? `Column total ${money(r.total(h))}` : `e.g. ${piiColumns(r)[h] ? '(redacted)' : esc(r.col(h).find(v => v.trim()) || '')}`; }
+function viewMapping() {
+  const j = S.job, c = clientOf(j.clientId);
+  if (!j.report) return `<h1>Step 3 - Mapping review</h1>${summary(j)}<div class="note bad">The uploaded report was deleted (${esc(j.fileDeleted || 'not uploaded')}). Upload it again to continue.</div>`;
+  const d = j.draft, mode = d ? { draft: 'edit', submitted: 'review', rejected: 'rejected' }[d.status] : 'approved';
+  const lines = d ? d.lines : j.mappingRef.lines, ref = j.mappingRef;
+  const roleOpts = ROLES.map(r => [r, ROLE_LABELS[r]]), sideOpts = SIDES.map(s => [s, s[0].toUpperCase() + s.slice(1)]);
+  const acctOpts = acctNos(c).map(n => [n, `${n} ${c.acct[n].name}`]), entOpts = c.entities.map(e => [e.code, e.code]), fundOpts = Object.entries(c.funds).map(([k, v]) => [k, `${k} - ${v}`]);
+  let banner = '';
+  if (mode === 'approved') banner = `<div class="note ok"><b>${j.matched ? 'Matched a saved mapping.' : 'Approved mapping.'}</b> Using <b>version ${ref.version}</b>, approved by ${esc(ref.decidedBy)}${ref.decidedAt ? ' at ' + esc(ref.decidedAt.slice(11, 19)) + ' UTC' : ''}.</div>`;
+  else if (mode === 'edit') banner = `<div class="note warn"><b>Draft - not approved.</b> ${esc(d.notice)}${d.source === 'mock' ? '<br><b>This is a mock suggestion, not an AI answer.</b>' : ''}</div>`;
+  else if (mode === 'review') banner = `<div class="note info"><b>Waiting for approval.</b> Submitted by ${esc(d.submittedBy)}. A Reviewer other than the people who prepared it must approve before any journal can be built.</div>`;
+  else banner = `<div class="note bad"><b>Sent back.</b> ${esc(d.note)}</div>`;
+  const probs = mode === 'edit' ? mappingProblems(lines, j.report, c) : [];
+  const head = `<th>Report column</th><th>Role</th><th>Side</th><th>GL account</th><th>Offset account</th><th>Entity</th><th>Fund</th>${mode === 'edit' ? '<th>Reviewed</th>' : ''}`;
+  const rows = lines.map((l, i) => {
+    const nm = `<td class="nm"><b>${esc(l.source_column)}</b><div class="muted small">${colInfo(j.report, l.source_column)}</div><div>${originChip(l)}</div>${l.rationale ? `<div class="rat">${esc(l.rationale)}</div>` : ''}</td>`;
+    if (mode === 'edit') {
+      const sel = (f, opts, v, lab) => `<td><select id="m-${i}-${f}" data-map="${i}:${f}" aria-label="${esc(lab)} for ${esc(l.source_column)}">${optList(opts, v)}</select></td>`;
+      return `<tr class="${!l.role ? 'unassigned' : ''} ${needsReview(l) ? 'review' : ''}">${nm}${sel('role', roleOpts, l.role, 'Role')}${sel('side', sideOpts, l.side, 'Side')}${sel('gl_account', acctOpts, l.gl_account, 'GL account')}${sel('offset_account', acctOpts, l.offset_account, 'Offset account')}${sel('entity', entOpts, l.entity, 'Entity')}${sel('fund', fundOpts, l.fund, 'Fund')}
+        <td style="text-align:center">${(l.origin === 'ai' || l.origin === 'mock') ? `<input type="checkbox" id="m-${i}-reviewed" data-map="${i}:reviewed" ${l.reviewed ? 'checked' : ''} aria-label="Reviewed ${esc(l.source_column)}">` : '<span class="muted">-</span>'}</td></tr>`;
+    }
+    const acct = n => (n ? `${esc(n)} <span class="muted">${esc((c.acct[n] || {}).name || '')}</span>` : '');
+    return `<tr>${nm}<td>${l.role ? ROLE_LABELS[l.role] : '-'}</td><td>${esc(l.side ? l.side[0].toUpperCase() + l.side.slice(1) : '')}</td><td>${acct(l.gl_account)}</td><td>${acct(l.offset_account)}</td><td>${esc(l.entity)}</td><td>${esc(l.fund)}</td></tr>`;
+  }).join('');
+  let actions = '';
+  if (mode === 'edit') {
+    actions = `<div class="row">${btn('save-map', 'Save draft')}${btn('suggest', 'Suggest a mapping (offline mock)')}${btn('submit-map', 'Submit for approval', 'primary')}${btn('tick-all', 'Tick all AI/mock lines as reviewed', 'quiet')}${ref ? btn('discard-draft', 'Discard draft', 'quiet') : ''}</div>`;
+  } else if (mode === 'approved') {
+    actions = `<div class="row">${btn('step:4', 'Continue to preview', 'primary')}${j.status === 'ready' ? btn('change-map', 'Propose changes (new version for approval)') : ''}</div>`;
+  } else if (mode === 'review') {
+    const author = [d.createdBy, d.submittedBy].some(e => lc(e) === lc(S.me.email));
+    actions = can('mapping.approve') ? `<section class="panel"><h2>Reviewer decision</h2>${author ? '<p class="note warn">You prepared this mapping. The approval will be refused: a different Reviewer has to approve it.</p>' : ''}
+      <div class="row">${btn('approve-map', 'Approve as the next version', 'primary')}<input type="text" id="rej-note" placeholder="Why is it being sent back?" maxlength="200" aria-label="Reason for sending back">${btn('reject-map', 'Send back')}</div></section>`
+      : '<p class="muted">Only a Reviewer can approve. Switch the role at the top right to continue.</p>';
+  } else actions = `<div class="row">${btn('reopen-map', 'Reopen the draft and fix it', 'primary')}</div>`;
+  const red = mode === 'edit' ? buildModelPayload(j.report) : null;
+  return `<h1>Step 3 - Mapping review</h1>${summary(j)}${banner}
+    ${mode === 'edit' ? '<p class="muted small">Each report column is shown next to the journal line it becomes. <b>Amount</b> columns are summed into one line (an offset account adds the matching liability for employer-side costs). Anything left at "-" counts as unmapped and blocks export.</p>' : ''}
+    <div class="panel scroll" style="padding:0"><table class="map"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${probs.length ? `<div class="note warn"><b>Before this can be submitted:</b><ul>${probs.slice(0, 6).map(p => `<li>${esc(p)}</li>`).join('')}${probs.length > 6 ? `<li>...and ${probs.length - 6} more</li>` : ''}</ul></div>` : ''}
+    ${actions}
+    ${mode === 'edit' ? `<section class="panel"><h2>About suggestions</h2><p>In this page, <b>Suggest a mapping</b> always uses the clearly labelled offline mock. The full tool calls Claude when an API key is set. Either way, suggestions only fill columns that are still unassigned, are never approved automatically, and each one must be ticked as reviewed before you can submit.</p>
+      <details><summary>Show exactly what would be sent to a model (${red.columns.length ? 'redacted: ' + esc(red.columns.join(', ')) : 'nothing redacted'})</summary><pre class="code">${esc(JSON.stringify(red.payload, null, 2))}</pre><p class="muted small">Employee names and ID numbers become tokens (EMP_001, ID_001 ...). Only headers, the row count and 3 redacted sample rows are included.</p></details></section>` : ''}`;
+}
+function viewPreview() {
+  const j = S.job;
+  if (!j.mappingRef) return `<h1>Step 4 - Preview and validation</h1>${summary(j)}<div class="note warn">Approve a mapping before previewing the journal.</div>`;
+  if (!j.report) return `<h1>Step 4 - Preview and validation</h1>${summary(j)}<div class="note bad">The uploaded report was deleted (${esc(j.fileDeleted)}); the preview can't be rebuilt.</div>`;
+  const p = previewOf(j), jn = p.journal, ents = byEntity(jn);
+  const icon = { pass: '✓', fail: '✗', warn: '!' };
+  return `<h1>Step 4 - Preview and validation</h1>${summary(j)}
+  <p class="muted small">Source file <b>${esc(j.file.name)}</b> · SHA-256 <span class="mono">${esc(j.file.sha.slice(0, 16))}…</span> · mapping <b>version ${j.mappingRef.version}</b> · journal date ${usDate(jn.date)} · reference <span class="mono">${esc(jn.reference)}</span></p>
+  <section class="panel"><h2>Validation checks</h2><ul class="checks">${p.checks.map(c => `<li class="check ${c.status}"><span class="ic" aria-hidden="true">${icon[c.status]}</span><div><b>${esc(c.label)}</b> ${chip({ pass: 'Passed', fail: 'FAILED', warn: 'Warning' }[c.status], { pass: 'ok', fail: 'bad', warn: 'warn' }[c.status])}<p>${esc(c.detail)}</p></div></li>`).join('')}</ul>
+    <div class="note ${p.ok ? 'ok' : 'bad'}" style="margin-top:.7rem">${p.ok ? 'All checks passed. The journal can be sent to a Reviewer for export approval.' : '<b>Export is blocked.</b> Fix the failing checks (usually the mapping or the source report) and re-upload or change the mapping.'}</div></section>
+  <section class="panel"><h2>Totals tie back to the source report</h2><div class="scroll"><table><thead><tr><th>Report column</th><th class="num">Sum of rows</th><th class="num">Report's total row</th><th class="num">Difference</th><th class="num">In journal</th><th class="num">Difference</th></tr></thead><tbody>
+    ${p.tie.map(r => { const vs = r.stated === null ? null : r.source - r.stated, bad = (vs !== null && vs !== 0) || (!r.note && r.source !== r.journal); return `<tr class="${bad ? 'bad' : ''}"><td>${esc(r.column)}${r.note ? ` <span class="muted">(${esc(r.note)})</span>` : ''}</td><td class="num">${money(r.source)}</td><td class="num">${r.stated === null ? '-' : money(r.stated)}</td><td class="num">${vs === null ? '-' : money(vs)}</td><td class="num">${money(r.journal)}</td><td class="num">${r.note ? '-' : money(r.source - r.journal)}</td></tr>`; }).join('')}</tbody></table></div></section>
+  <section class="panel"><h2>Draft journal entry <span class="muted">- ${jn.lines.length} lines</span></h2><div class="scroll"><table><thead><tr><th>#</th><th>Account</th><th>Entity</th><th>Fund</th><th class="num">Debit</th><th class="num">Credit</th><th>Memo</th></tr></thead><tbody>
+    ${jn.lines.map(l => `<tr class="${l.kind === 'interco' ? 'interco' : ''}"><td>${l.line_no}</td><td>${esc(l.account_no)} <span class="muted">${esc(l.account_name)}</span></td><td>${esc(l.entity)}</td><td>${esc(l.fund)}</td><td class="num">${l.debit ? money(l.debit) : ''}</td><td class="num">${l.credit ? money(l.credit) : ''}</td><td>${esc(l.memo)}${l.kind === 'interco' ? ' ' + chip('inter-entity', 'warn') : ''}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="4">Totals</td><td class="num">${money(jn.debits)}</td><td class="num">${money(jn.credits)}</td><td></td></tr></tfoot></table></div>
+    ${ents.size > 1 ? `<h3>Balance by entity</h3><div class="scroll"><table><thead><tr><th>Entity</th><th class="num">Debits</th><th class="num">Credits</th><th>Balanced?</th></tr></thead><tbody>${[...ents].map(([e, [d, c]]) => `<tr><td>${esc(e)}</td><td class="num">${money(d)}</td><td class="num">${money(c)}</td><td>${d === c ? '✓' : '✗ out of balance'}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${jn.zeroColumns.length ? `<p class="muted small">Columns with a zero total were skipped: ${esc(jn.zeroColumns.join(', '))}.</p>` : ''}</section>
+  <div class="row">${btn('step:3', 'Back to mapping')}${j.status === 'ready' ? (p.ok ? btn('request-export', 'Request export approval', 'primary') : btn('noop', 'Request export approval (blocked)', 'primary', 'disabled title="All checks must pass"')) : btn('step:5', 'Go to export', 'primary')}</div>`;
+}
+function viewExport() {
+  const j = S.job, c = clientOf(j.clientId);
+  if (!['export_requested', 'export_approved', 'exported'].includes(j.status)) return `<h1>Step 5 - Export</h1>${summary(j)}<div class="note warn">Request export approval from the preview step first.</div>`;
+  const prepared = preparersOf(j).some(e => lc(e) === lc(S.me.email));
+  let body = '';
+  if (j.status === 'export_requested') {
+    const p = j.report ? previewOf(j) : null;
+    body = `${p ? `<section class="panel"><h2>Journal to be exported</h2><p>${p.journal.lines.length} lines · total ${money(p.journal.debits)} · mapping v${j.mappingRef.version} · checks: ${p.ok ? 'all passed' : 'FAILING'} · ${btn('step:4', 'view preview', 'quiet sm')}</p><p class="muted small">Prepared by ${esc(j.createdByName)} (${esc(j.createdBy)}). Approval requested by ${esc(j.requestedBy)}.</p></section>` : ''}
+    <section class="panel"><h2>Waiting for a Reviewer</h2><p>A Reviewer who did not prepare this journal must approve it. <b>You cannot approve your own export.</b></p>
+      ${can('export.approve') ? `${prepared ? '<p class="note warn">You prepared this journal. The approval will be refused. Ask a different Reviewer (use the Act as buttons above).</p>' : ''}<div class="row">${btn('approve-export', 'Approve export', 'primary')}<input type="text" id="rej-note" placeholder="Why is it being sent back?" maxlength="200" aria-label="Reason for sending back">${btn('reject-export', 'Send back')}</div>` : '<p class="muted">Only users with the Reviewer role see the approve button. Switch the role at the top right.</p>'}</section>`;
+  } else if (j.status === 'export_approved') {
+    body = `<section class="panel"><h2>Approved - generate the import file</h2><p>Approved by <b>${esc(j.approvedBy)}</b> at ${esc(j.approvedAt.slice(11, 19))} UTC.</p>
+      <label class="choice"><input type="checkbox" id="del-after" checked> Delete the uploaded source report after export <span class="muted small">(the full tool otherwise keeps it for 30 days)</span></label>
+      <div class="row" style="margin-top:.6rem">${btn('generate', `Generate ${TARGETS[j.target]} import file`, 'primary')}</div></section>`;
+  } else {
+    const x = j.exported, preview = x.csv.split('\r\n').slice(0, 7).join('\n');
+    body = `<section class="panel"><h2>Import file ready</h2><dl class="summary"><div><dt>File</dt><dd class="mono">${esc(x.filename)}</dd></div><div><dt>SHA-256</dt><dd class="mono">${esc(x.sha.slice(0, 24))}…</dd></div><div><dt>Lines</dt><dd>${x.rowCount} · total ${money(x.total)}</dd></div><div><dt>Approved by</dt><dd>${esc(j.approvedBy)}</dd></div><div><dt>Generated by</dt><dd>${esc(j.exportedBy)}</dd></div><div><dt>Source report</dt><dd>${j.fileDeleted ? 'deleted (' + esc(j.fileDeleted) + ')' : 'kept'}</dd></div></dl>
+      <div class="row" style="margin-top:.8rem">${btn('copy-csv', 'Copy CSV to clipboard', 'primary')}<span class="muted small">Downloads are blocked inside this viewer, so copy the text and paste it into a .csv file.</span></div>
+      <h3>First lines of the file</h3><pre class="code" id="csv-pre">${esc(preview)}\n...</pre>
+      <details><summary>Show the whole file (${x.rowCount + 1} rows)</summary><pre class="code" id="csv-full">${esc(x.csv)}</pre></details></section>`;
+  }
+  return `<h1>Step 5 - Export</h1>${summary(j)}<div class="note info">This page only <b>prepares</b> a file for ${TARGETS[j.target]}. The real tool never connects to or posts to ${TARGETS[j.target]}; someone imports the file there themselves.</div>${body}`;
+}
+function viewWizard() {
+  const j = S.job, step = S.step || curStep(j);
+  let main;
+  if (!can('job.work') && !can('job.create')) {
+    return `<section class="panel"><h1>Admins administer, they don't prepare journals</h1><p>The wizard needs the Preparer or Reviewer role. ${btn('as:' + USERS[0].email + ':preparer', 'Act as ' + USERS[0].name, 'primary')} ${btn('as:' + USERS[1].email + ':reviewer', 'Act as ' + USERS[1].name)}</p></section>`;
+  }
+  if (!j || step === 1) main = viewIntake();
+  else if (step === 2) main = viewUpload();
+  else if (step === 3) main = viewMapping();
+  else if (step === 4) main = viewPreview();
+  else main = viewExport();
+  const bar = j ? `<div class="row spread"><span class="muted small">Job #${j.id} · ${esc(clientOf(j.clientId).name)}</span>${btn('reset-job', 'New journal entry', 'sm')}</div>` : '';
+  return `${bar}${stepper()}${hint()}${main}`;
+}
+function viewQueue() {
+  if (!can('review.queue')) return gate('Review queue', 'review.queue', 'reviewer');
+  const j = S.job, items = [];
+  if (j && j.status === 'mapping_submitted') items.push({ kind: 'Mapping approval', by: j.draft.submittedBy, own: [j.draft.createdBy, j.draft.submittedBy].some(e => lc(e) === lc(S.me.email)), step: 3 });
+  if (j && j.status === 'export_requested') items.push({ kind: 'Export approval', by: j.requestedBy, own: preparersOf(j).some(e => lc(e) === lc(S.me.email)), step: 5 });
+  return `<h1>Review queue</h1><p class="muted">Mappings and exports waiting for a Reviewer. You can't approve work you prepared yourself.</p>
+  ${items.length ? `<div class="panel scroll"><table><thead><tr><th>Needs</th><th>Job</th><th>Client</th><th>Pay period</th><th>Prepared by</th><th></th></tr></thead><tbody>${items.map(it => `<tr><td>${chip(it.kind, 'info')}</td><td>#${j.id}</td><td>${esc(clientOf(j.clientId).name)}</td><td>${usDate(j.start)} - ${usDate(j.end)}</td><td>${esc(it.by)}</td><td>${it.own ? '<span class="muted">You prepared this</span> · ' : ''}${btn('open:' + it.step, 'Open', 'sm')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="panel muted">Nothing is waiting for review. Run a scenario as a Preparer, then come back as a Reviewer.</div>'}`;
+}
+function gate(title, perm, role) {
+  const u = USERS.find(x => PERMS[x.role].includes(perm));
+  return `<section class="panel"><h1>${esc(title)}</h1><p>Your current role (${S.me.role}) doesn't include this. In the real tool the server refuses it too.</p><p>${btn('as:' + u.email + ':' + u.role, `Act as ${u.name} (${u.role})`, 'primary')}</p></section>`;
+}
+function viewAudit() {
+  if (!can('audit.view')) return gate('Audit log', 'audit.view');
+  const chain = verifyChain(S.audit), rows = [...S.audit].map((e, i) => ({ ...e, n: i + 1 })).reverse();
+  return `<h1>Audit log</h1><p class="muted">Who did what, when, which mapping version was used, the SHA-256 of each uploaded file, and who approved each export. Entries are hash-chained.</p>
+  <div class="note ${chain.ok ? 'ok' : 'bad'}">${chain.ok ? `<b>Hash chain verified</b> - ${chain.n} entries, none altered.` : `<b>TAMPERING DETECTED</b> - the chain breaks at entry #${chain.brokenAt}.`}</div>
+  <div class="row">${S.tamper === null ? btn('tamper', 'Simulate someone editing an old entry') : btn('restore', 'Undo the edit', 'primary')}<span class="muted small">The database also blocks edits with triggers; this shows that even a direct edit is detectable.</span></div>
+  <div class="panel scroll" style="padding:0"><table><thead><tr><th>#</th><th>When (UTC)</th><th>Who</th><th>Action</th><th>Client</th><th>Job</th><th>Map v</th><th>File SHA-256</th><th>Details</th></tr></thead><tbody>
+  ${rows.map(e => `<tr><td>${e.n}</td><td class="mono small" style="white-space:nowrap">${esc(e.ts.slice(11, 19))}</td><td>${esc(e.actor_name)}<div class="muted small">${esc(e.actor_email)}${e.actor_roles ? ' · ' + esc(e.actor_roles) : ''}</div></td><td>${chip(e.action, /denied|rejected|failed/.test(e.action) ? 'bad' : '')}</td><td>${esc(e.client_id || '')}</td><td>${e.job_id ?? ''}</td><td>${e.mapping_version ?? ''}</td><td class="mono small">${e.file_sha256 ? esc(e.file_sha256.slice(0, 12)) + '…' : ''}</td><td class="mono small" style="overflow-wrap:anywhere;min-width:12rem">${e.details === '{}' ? '' : esc(e.details)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function viewClients() {
+  if (!can('admin.clients')) return gate('Clients', 'admin.clients');
+  const olg = clientOf('our-lady-grace');
+  return `<h1>Clients</h1><p class="muted">Entities and allocation percentages. A change here drives the next allocated journal and is written to the audit log.</p>
+  <div class="panel scroll" style="padding:0"><table><thead><tr><th>Client</th><th>Entities (allocation %)</th><th>Funds</th><th>Allocation</th></tr></thead><tbody>
+  ${Object.values(S.clients).map(c => `<tr><td><b>${esc(c.name)}</b><div class="muted small">${esc(c.id)}</div></td><td>${c.entities.map(e => `${esc(e.code)} ${e.pct}%${e.paying ? ' ' + chip('pays') : ''}`).join('<br>')}</td><td>${Object.keys(c.funds).length}</td><td>${allocationProblems(c).length ? `<span class="muted small">${esc(allocationProblems(c)[0])}</span>` : chip('Ready', 'ok')}</td></tr>`).join('')}</tbody></table></div>
+  <section class="panel"><h2>Allocation for ${esc(olg.name)}</h2><div class="grid2">${olg.entities.map(e => `<label class="f" for="pct-${e.code}">${esc(e.code)} - ${esc(e.name)}${e.paying ? ' (pays payroll)' : ''}<input type="number" id="pct-${e.code}" data-pct="${e.code}" value="${e.pct}" min="0" max="100" step="0.01"></label>`).join('')}</div>
+    <div class="row" style="margin-top:.8rem">${btn('save-pct', 'Save allocation', 'primary')}<span class="muted small">Must add up to exactly 100.</span></div></section>`;
+}
+function viewAbout() {
+  return `<h1>About this page</h1>
+  <section class="panel"><p>This is a click-through of the <b>Journal Entry Prep</b> tool. It runs entirely in your browser on synthetic data: nothing is sent anywhere and nothing is posted to Sage Intacct or QuickBooks Online. Reloading the page resets it.</p>
+    <p>The real tool is a Python (FastAPI + SQLite) web app. This page re-implements its engine in JavaScript so it can run without a server, and that engine was checked against the Python one: the same inputs produce identical journal lines, check results and export files.</p></section>
+  <section class="panel"><h2>What differs from the real tool</h2><ul>
+    <li><b>Sign-in</b> is the demo user switcher. The real tool uses Okta (OIDC) and shows this switcher only when DEMO_MODE is on.</li>
+    <li><b>Suggestions</b> always use the labelled offline mock here. The real tool calls Claude when an API key is set, after redacting names and IDs.</li>
+    <li><b>Files</b> are CSV only and held in memory. The real tool also reads Excel, stores uploads privately with a retention limit, and offers a real download.</li>
+    <li><b>One job at a time</b>, and no database. The audit log lives in memory for this session.</li></ul></section>
+  <section class="panel"><h2>Still needed before production</h2><ul>
+    <li>Okta app registration and group provisioning.</li><li>Intacct and QuickBooks import layouts checked against each client's own template. The column layouts here are a best-effort reconstruction.</li>
+    <li>Real charts of accounts, entities and funds per client.</li><li>IT and security review, including whether redacted payroll structure may be sent to the Anthropic API.</li></ul></section>
+  <section class="panel"><p class="muted small">Source: branch <code>claude/focused-gates-wj776d</code> of <code>stephenmcnulty/helloworld</code>, folder <code>jeprep/</code> (this page is built from <code>jeprep/artifact/</code>).</p></section>`;
+}
+
+/* ---------- shell + events ---------- */
+function render() {
+  const active = document.activeElement && document.activeElement.id;
+  const y = window.scrollY, root = document.getElementById('root');
+  const waiting = S.job && ['mapping_submitted', 'export_requested'].includes(S.job.status) ? 1 : 0;
+  const tabs = [['wizard', 'Wizard'], ['queue', 'Review queue'], ['audit', 'Audit log'], ['clients', 'Clients'], ['about', 'About']];
+  const view = { wizard: viewWizard, queue: viewQueue, audit: viewAudit, clients: viewClients, about: viewAbout }[S.tab]();
+  root.innerHTML = `<div class="demo-banner" role="note"><div class="wrap"><b>DEMO - synthetic data only.</b> Runs entirely in this page. It only prepares import files and never posts to Sage Intacct or QuickBooks Online.</div></div>
+  <header class="top"><div class="wrap"><div class="brand"><b>JE</b> Journal Entry Prep</div>
+    <nav class="tabs" aria-label="Sections">${tabs.map(([k, l]) => `<button class="tab" data-act="tab:${k}"${S.tab === k ? ' aria-current="page"' : ''}>${l}${k === 'queue' && waiting ? '<span class="pill">' + waiting + '</span>' : ''}</button>`).join('')}</nav>
+    <div class="acting"><label for="sel-user">Acting as</label><select id="sel-user" aria-label="Demo user">${USERS.map(u => `<option value="${u.email}"${u.email === S.me.email ? ' selected' : ''}>${u.name}</option>`).join('')}</select>
+      <select id="sel-role" aria-label="Role">${['preparer', 'reviewer', 'admin'].map(r => `<option value="${r}"${r === S.me.role ? ' selected' : ''}>${r[0].toUpperCase() + r.slice(1)}</option>`).join('')}</select></div></div></header>
+  <main class="wrap">${S.flash ? `<div class="note ${S.flash.kind}" role="${S.flash.kind === 'bad' ? 'alert' : 'status'}">${esc(S.flash.text)}</div>` : ''}${view}</main>`;
+  window.scrollTo(0, y);
+  if (active) { const el = document.getElementById(active); if (el) el.focus({ preventScroll: true }); }
+}
+function go(fn) { try { S.flash = null; fn(); } catch (e) { say('bad', e.message || String(e)); } render(); }
+function copyCsv() {
+  const text = S.job.exported.csv, el = document.getElementById('csv-full') || document.getElementById('csv-pre');
+  const fallback = () => { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); say('info', 'Copy was blocked here. The file text is selected: press Ctrl/Cmd+C.'); render(); };
+  try { navigator.clipboard.writeText(text).then(() => { say('ok', 'Copied. Paste it into a text editor and save as .csv.'); render(); }, fallback); } catch (e) { fallback(); }
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t) return;
+  const [act, ...arg] = t.dataset.act.split(':'), a = arg.join(':'), j = S.job;
+  const acts = {
+    tab: () => { S.tab = a; }, step: () => { S.tab = 'wizard'; S.step = +a; }, open: () => { S.tab = 'wizard'; S.step = +a; },
+    scn: () => { const s = SCENARIOS.find(x => x.id === a); S.scenario = s; S.intake = { client: s.client, target: s.target, start: s.start, end: s.end, allocate: s.allocate }; S.suggest = s.file; },
+    start: () => startJob(), 'reset-job': () => { S.job = null; S.step = null; S.tab = 'wizard'; S.flash = null; },
+    file: () => { const f = DEMO.files.find(x => x.filename === a); useFile(f.filename, f.csv); },
+    as: () => { const [email, role] = [arg[0], arg[1]]; const u = USERS.find(x => x.email === email); S.me = { email: u.email, name: u.name, role }; },
+    suggest: () => suggestMapping(), 'save-map': () => { audit('mapping_saved', { sha: j.file.sha, details: { lines: j.draft.lines.length } }); say('ok', 'Mapping saved as a draft.'); },
+    'submit-map': () => submitMapping(), 'approve-map': () => approveMapping(),
+    'reject-map': () => rejectMapping((document.getElementById('rej-note') || {}).value || ''),
+    'reopen-map': () => { j.draft.status = 'draft'; j.status = j.mappingRef ? 'ready' : 'needs_mapping'; audit('mapping_reopened'); say('info', 'Mapping reopened for editing.'); },
+    'change-map': () => proposeChanges(), 'discard-draft': () => { j.draft = null; j.status = 'ready'; audit('mapping_draft_discarded'); say('info', 'Draft discarded; the approved mapping stays in use.'); },
+    'tick-all': () => { j.draft.lines.forEach(l => { if (l.origin === 'ai' || l.origin === 'mock') l.reviewed = true; }); },
+    'request-export': () => requestExport(), 'approve-export': () => approveExport(),
+    'reject-export': () => rejectExport((document.getElementById('rej-note') || {}).value || ''),
+    generate: () => generateExport(!!(document.getElementById('del-after') || {}).checked), 'copy-csv': () => { copyCsv(); return false; },
+    tamper: () => { S.tamper = S.audit[Math.min(3, S.audit.length - 1)].actor_email; S.audit[Math.min(3, S.audit.length - 1)].actor_email = 'mallory@example.com'; },
+    restore: () => { S.audit[Math.min(3, S.audit.length - 1)].actor_email = S.tamper; S.tamper = null; },
+    'save-pct': () => {
+      const c = clientOf('our-lady-grace'), vals = {}; document.querySelectorAll('[data-pct]').forEach(i => { vals[i.dataset.pct] = parseFloat(i.value); });
+      const sum = Math.round(Object.values(vals).reduce((x, y) => x + y, 0) * 100);
+      if (Object.values(vals).some(v => !(v >= 0 && v <= 100))) return say('bad', 'Each percentage must be a number from 0 to 100.');
+      if (sum !== 10000) return say('bad', `Not saved: allocation percentages must add up to exactly 100 (they add up to ${sum / 100}).`);
+      const before = Object.fromEntries(c.entities.map(e => [e.code, e.pct])); c.entities.forEach(e => { e.pct = vals[e.code]; });
+      audit('client_updated', { client: c.id, job: null, details: { allocation_before: before, allocation_after: vals } }); say('ok', 'Client saved. The next allocated journal uses these percentages.');
+    },
+    noop: () => {},
+  };
+  if (!acts[act]) return;
+  try { S.flash = null; if (acts[act]() === false) return; } catch (e) { say('bad', e.message || String(e)); }
+  render();
+});
+document.addEventListener('change', ev => {
+  const t = ev.target, j = S.job;
+  if (t.id === 'sel-user') { const u = USERS.find(x => x.email === t.value); S.me = { email: u.email, name: u.name, role: u.role }; S.flash = null; return render(); }
+  if (t.id === 'sel-role') { S.me.role = t.value; S.flash = null; return render(); }
+  if (t.dataset.bind) { S.intake[t.dataset.bind] = t.value; S.scenario = null; return render(); }
+  if (t.dataset.map && j && j.draft) {
+    const [i, f] = t.dataset.map.split(':'), l = j.draft.lines[+i], c = clientOf(j.clientId);
+    if (f === 'reviewed') l.reviewed = t.checked;
+    else {
+      l[f] = t.value;
+      if (f === 'role' && t.value !== 'amount') { l.line_type = l.side = l.gl_account = l.offset_account = l.entity = l.fund = ''; }
+      if (f === 'role' && t.value === 'amount') { const [e, fd] = defaultDims(c); l.entity = l.entity || e; l.fund = l.fund || fd; }
+      if (f === 'gl_account') l.line_type = lineTypeFor(c, t.value) || l.line_type;
+      if (l.origin !== 'ai' && l.origin !== 'mock' && l.origin !== 'rules' && l.origin !== 'saved') l.origin = 'manual';
+    }
+    return render();
+  }
+  if (t.id === 'own-file' && t.files && t.files[0] && j) {
+    const file = t.files[0], r = new FileReader();
+    if (file.size > 5 * 1024 * 1024) { say('bad', 'The file is larger than the 5 MB limit.'); return render(); }
+    r.onload = () => { try { useFile(file.name, String(r.result)); } catch (e) { say('bad', e.message); } render(); };
+    r.readAsText(file);
+  }
+});
+
+/* ---------- boot ---------- */
+(function init() {
+  DEMO.clients.forEach(c => { S.clients[c.id] = prepClient(c); });
+  const std = DEMO.files.find(f => f.filename === 'our-lady-grace_payroll_2026-10-15.csv'), sig = parseReport(std.csv).signature;
+  const seed = { email: 'system', name: 'Demo seed', role: '' }, pat = USERS[0], rhea = USERS[1];
+  DEMO.clients.forEach(c => audit('client_created', { actor: seed, client: c.id, job: null, details: { name: c.name, source: 'demo seed (synthetic data)' } }));
+  DEMO.saved.forEach(m => {
+    S.saved.push({ clientId: m.clientId, version: m.version, signature: sig, lines: m.lines, decidedBy: m.decidedBy, decidedAt: null, note: m.note });
+    audit('mapping_submitted', { actor: pat, client: m.clientId, job: null, details: { note: m.note, seeded: true } });
+    audit('mapping_approved', { actor: rhea, client: m.clientId, job: null, mv: m.version, details: { note: m.note, seeded: true } });
+  });
+  render();
+})();
+</script>

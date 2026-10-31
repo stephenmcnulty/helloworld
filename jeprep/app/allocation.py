@@ -33,7 +33,7 @@ def split_amount(amount: Decimal, weights: Sequence[tuple[str, Decimal]]) -> dic
     order = sorted(range(len(weights)), key=lambda i: (-(exact[i] - floors[i]), i))
     for i in order[:leftover]:
         floors[i] += 1
-    return {code: Decimal(sign * f) / Decimal(100) for (code, _), f in zip(weights, floors)}
+    return {code: q(Decimal(sign * f) / Decimal(100)) for (code, _), f in zip(weights, floors)}   # always 2 dp
 
 
 @dataclass(frozen=True)
