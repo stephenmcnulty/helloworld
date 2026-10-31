@@ -15,6 +15,12 @@
     <label>Email
       <input type="email" name="email" id="login-email" value="{{ form.email }}" maxlength="254" autocomplete="email" required>
     </label>
+    {% if settings.access_code %}
+    <label>Access code
+      <input type="password" name="access_code" id="login-code" autocomplete="off" required>
+      <small class="muted">Given to you with the link.</small>
+    </label>
+    {% endif %}
     <fieldset><legend>Role</legend>
       {% for key, label in ROLE_LABELS.items() %}
       <label class="choice"><input type="radio" name="role" value="{{ key }}" {{ 'checked' if form.role == key }}> {{ label }} <small>{{ ROLE_BLURBS[key] }}</small></label>

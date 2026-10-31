@@ -18,7 +18,7 @@ pip install -r requirements-dev.txt
 Open <http://127.0.0.1:8000>, enter a name, email and role on the sign-in form (the page has one-click links that pre-fill the demo people), and follow the [demo script](#demo-script). No account and no API key are needed. To start over, stop the server and delete the `data/` folder.
 
 ```bash
-python -m pytest         # ~195 tests: validation, allocation math, export formats, redaction, security, end-to-end flows
+python -m pytest         # ~215 tests: validation, allocation math, export formats, redaction, security, end-to-end flows
 ```
 
 ## Demo script
@@ -87,7 +87,9 @@ Environment variables (or a local `.env`, see `.env.example`; real env vars win)
 | `DEMO_MODE` | Seed the synthetic clients/mappings and offer the sample files (and the demo sign-in shortcuts). **Demo only.** | off |
 | `SECRET_KEY` | Session signing key (32+ chars). If unset, a per-process key is used and everyone is signed out on restart | random per run |
 | `APP_ENV` | `production` is **refused** while sign-in is self-declared | `demo` |
-| `COOKIE_SECURE` | Mark session cookie HTTPS-only | `false` |
+| `COOKIE_SECURE` | Mark session cookie HTTPS-only (set `true` on any HTTPS host; also turns on HSTS) | `false` |
+| `ACCESS_CODE` | Optional shared code (8+ chars) required on the sign-in form. **Set it for any copy others can reach** | unset |
+| `PORT` | Port to listen on when started via the Dockerfile (hosts set this) | `8000` |
 | `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | Enable real AI suggestions | unset → mock |
 | `DATA_DIR` | Database, uploads, exports | `./data` |
 | `MAX_UPLOAD_MB`, `MAX_ROWS`, `MAX_COLUMNS` | Upload limits | 5 / 20000 / 100 |
@@ -108,6 +110,43 @@ Because it is not authentication, it is for the synthetic demo only: **`APP_ENV=
 
 **To add Okta (or another identity provider) later**, everything downstream already keys off one session object created in `app/auth.py::login_user(email, name, roles, method)`. Add a route that authenticates the person (for Okta, an OIDC Authorization Code + PKCE flow, e.g. with Authlib, using the `groups` claim to decide roles with no matching group meaning no access), have it call `login_user` with the *verified* email and name, remove the self-declared form and its role choice, and lift the `APP_ENV=production` guard in `app/config.py`. Roles, segregation of duties and the audit trail need no changes. A previous revision of this repo contained a working Okta/Authlib implementation (commit `c660904`) that can be used as a starting point.
 
+## Hosting a copy for others to open
+
+The app is a normal container (`Dockerfile`) that listens on `$PORT` and answers `GET /healthz`, so any host that runs a Dockerfile can serve it. This section uses [Render](https://render.com) as the worked example because its setup is mostly clicking.
+
+**What protects a hosted copy.** Sign-in is still self-declared (see above), so on its own anyone who finds the URL could sign in as Admin. Setting `ACCESS_CODE` adds one **shared code** to the sign-in form: people need the code *and* then type their own name, email and role. That is a shared password, not individual accounts: anyone you give the code to can choose any role, and you can't revoke one person. Wrong codes are throttled (10 per 5 minutes per address) and the attempted code is never logged or echoed. The site also asks search engines not to index it, sends HSTS over HTTPS, and `APP_ENV=production` stays refused. **Synthetic data only; don't upload real client data to a hosted copy.**
+
+**What has and hasn't been tested.** Tested: the app, the access code and throttle, the health check, the security headers, and the container's exact start command run directly from a copy holding only the files the image copies. **Not tested:** building the Docker image (the dev sandbox has no Docker daemon) and deploying to Render (the sandbox couldn't reach render.com). `render.yaml` was written from memory. If something fails, the error will be loud and the manual settings below are equivalent.
+
+### On Render
+
+1. Create an account at render.com using **Sign in with GitHub**, and allow it to read `stephenmcnulty/helloworld`.
+2. **New → Blueprint**, pick the repo and the branch `claude/focused-gates-wj776d` (or merge that branch into your default branch first and pick that).
+3. When it asks for **`ACCESS_CODE`**, enter a code of 8+ characters. Render generates `SECRET_KEY` itself.
+4. Apply. The first build takes a few minutes; the site appears at a `https://journal-entry-prep-….onrender.com` address.
+5. Send people the address and the code. They enter the code, their name, email and a role.
+
+If the Blueprint is rejected, use **New → Web Service** and set: runtime **Docker**; Dockerfile path `./jeprep/Dockerfile`; Docker build context directory `./jeprep`; health check path `/healthz`; and these environment variables:
+
+| Variable | Value |
+|---|---|
+| `DEMO_MODE` | `true` |
+| `APP_ENV` | `demo` |
+| `COOKIE_SECURE` | `true` |
+| `SECRET_KEY` | a random string of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(48))"`) |
+| `ACCESS_CODE` | the shared code, 8+ characters |
+
+### Other hosts
+
+Fly.io, Railway, Google Cloud Run and Azure Container Apps all run a Dockerfile and provide `$PORT`; use the same environment variables. The container trusts forwarded-address headers from whatever is in front of it (so throttling sees real client addresses), which is only safe because the host's HTTPS proxy is the sole way in: never publish the container's port directly to the internet.
+
+### Running it
+
+* **Idle and restarts.** Free tiers typically put the site to sleep when idle (the first visit afterwards is slow) and use a disk that is wiped on restart or redeploy. Here that means the seeded sample data comes back, but uploads, exports and the audit log are lost. Check your host's current terms; for a leadership demo, open the site a few minutes beforehand.
+* **Changing the code.** Edit `ACCESS_CODE` and redeploy. People already signed in stay signed in until their session ends (8 hours); change `SECRET_KEY` as well to sign everyone out.
+* **Updating the app.** Push to the deployed branch; the host rebuilds.
+* **Local container.** `docker build -t journal-entry-prep jeprep && docker run -p 8000:8000 -e ACCESS_CODE=choose-a-code journal-entry-prep`, then <http://localhost:8000>.
+
 ## Security and governance built in
 
 * **AuthZ** - self-declared sign-in (see above), deny-by-default roles enforced on every route; CSRF tokens on every POST; fresh session on login; open-redirect-safe `next`; secure/same-site cookies; CSP, `X-Frame-Options`, `nosniff`, `no-store`.
@@ -123,6 +162,7 @@ app/
   main.py config.py db.py        app factory, env settings, SQLite schema
   auth.py audit.py               self-declared sign-in, roles, CSRF; hash-chained audit log
   storage.py                     upload validation, private storage, retention
+  healthcheck.py                 container health probe (Dockerfile HEALTHCHECK)
   parsing.py money.py            CSV/XLSX -> report (Decimal only); layout signature
   domain.py rules.py mapping.py  client config + mapping lines; header rules; versioned mappings
   redaction.py suggest.py        PII tokenizer; suggest_mapping() (Claude or labelled mock)
@@ -133,6 +173,7 @@ app/
   demo/                          synthetic data generator and DB seed
 demo_data/                       generated sample registers (synthetic)
 artifact/                        single-file browser walkthrough: template, build script, engine-parity check
+Dockerfile .dockerignore         container image (see "Hosting a copy"); ../render.yaml is a Render Blueprint
 tests/                           pytest suite
 ```
 

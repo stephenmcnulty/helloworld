@@ -71,7 +71,7 @@ label small { font-weight: 400; color: var(--muted); }
 fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem 0.8rem; margin: 0; }
 legend { font-weight: 650; padding: 0 0.3rem; font-size: 0.92rem; }
 .choice { flex-direction: row; align-items: baseline; gap: 0.5rem; font-weight: 500; padding: 0.2rem 0; }
-input[type=text], input[type=email], input[type=date], input[type=file], select { font: inherit; padding: 0.42rem 0.55rem; border: 1px solid #c4cdd8; border-radius: 6px; background: #fff; color: var(--ink); max-width: 100%; }
+input[type=text], input[type=email], input[type=password], input[type=date], input[type=file], select { font: inherit; padding: 0.42rem 0.55rem; border: 1px solid #c4cdd8; border-radius: 6px; background: #fff; color: var(--ink); max-width: 100%; }
 input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #93b4f5; outline-offset: 1px; }
 .btn { display: inline-block; font: inherit; font-weight: 600; padding: 0.5rem 0.95rem; border-radius: 6px; border: 1px solid #b7c2cf; background: #fff; color: var(--ink); cursor: pointer; text-decoration: none; }
 .btn:hover { background: #f0f3f7; }

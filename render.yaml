@@ -1,0 +1,22 @@
+# Render Blueprint for the Journal Entry Prep demo (https://render.com/docs/blueprint-spec).
+# UNTESTED: written from memory without access to Render's docs or an account. If Render reports a problem with
+# this file, create a Web Service by hand instead (see "Hosting a copy" in jeprep/README.md) - the settings are the same.
+services:
+  - type: web
+    name: journal-entry-prep
+    runtime: docker
+    dockerfilePath: ./jeprep/Dockerfile
+    dockerContext: ./jeprep
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: APP_ENV
+        value: demo
+      - key: COOKIE_SECURE        # Render serves the site over HTTPS
+        value: "true"
+      - key: SECRET_KEY           # signs session cookies; Render generates a random one
+        generateValue: true
+      - key: ACCESS_CODE          # you type this in when creating the service; share it with the people you invite
+        sync: false

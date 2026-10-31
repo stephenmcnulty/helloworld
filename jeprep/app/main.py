@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
@@ -31,6 +31,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Journal Entry Prep (demo)", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     app.state.db = db = Database(settings.db_path)
+    app.state.limiter = auth.AttemptLimiter()
     db.init_schema()
     for folder in (settings.upload_dir, settings.export_dir):
         storage.ensure_private_dir(settings.data_dir)
@@ -42,6 +43,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if seed_demo(db):
             log.warning("DEMO_MODE: seeded synthetic clients and saved mappings.")
     log.warning("Sign-in is self-declared: names, emails and roles are not verified. Do not use with real data.")
+    if settings.access_code and not settings.cookie_secure:
+        log.warning("ACCESS_CODE is set but COOKIE_SECURE is off: serve this over HTTPS and set COOKIE_SECURE=true.")
     removed = storage.purge_expired(settings, db)
     if removed:
         log.info("Retention purge removed %d file(s) at startup.", len(removed))
@@ -59,6 +62,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "same-origin")
+        response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
+        if settings.cookie_secure:   # only when the site really is served over HTTPS
+            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
         if not request.url.path.startswith("/static"):
             response.headers.setdefault("Cache-Control", "no-store")
         return response
@@ -77,6 +83,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         message = exc.detail if isinstance(exc.detail, str) and exc.detail not in ("Forbidden", "Not Found") else {
             403: "You don't have permission to do that.", 404: "That page doesn't exist."}.get(exc.status_code, "Something went wrong.")
         return render(request, "error.html", status_code=exc.status_code, title=titles.get(exc.status_code, "Error"), message=message)
+
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz():
+        """Liveness probe for the host. No authentication and no data."""
+        return {"status": "ok"}
+
+    @app.get("/robots.txt", include_in_schema=False)
+    async def robots():
+        return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
     app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
     app.include_router(routes_misc.router)

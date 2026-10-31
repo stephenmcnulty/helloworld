@@ -62,6 +62,7 @@ class Settings:
     cookie_secure: bool
     anthropic_api_key: str
     anthropic_model: str
+    access_code: str         # optional shared code required on the sign-in form (for a hosted demo)
 
     @property
     def ai_configured(self) -> bool:
@@ -90,6 +91,7 @@ class Settings:
             cookie_secure=_as_bool(e.get("COOKIE_SECURE"), False),
             anthropic_api_key=e.get("ANTHROPIC_API_KEY", ""),
             anthropic_model=e.get("ANTHROPIC_MODEL", "claude-opus-5-5"),
+            access_code=(e.get("ACCESS_CODE") or "").strip(),
         )
         if validate:
             settings.validate()
@@ -101,5 +103,7 @@ class Settings:
                 "Sign-in is self-declared (the name, email and role a person types are not verified), so "
                 "APP_ENV=production is refused until a real identity provider such as Okta is added."
             )
+        if self.access_code and len(self.access_code) < 8:
+            raise ConfigError("ACCESS_CODE must be at least 8 characters (or leave it unset).")
         if len(self.secret_key) < 32:
             raise ConfigError("SECRET_KEY must be at least 32 characters (or leave it unset for a per-process key).")

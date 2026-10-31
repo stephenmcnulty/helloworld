@@ -32,14 +32,32 @@ def login_page(request: Request, next_url: str = Query("/", alias="next"), name:
 
 @router.post("/login", dependencies=CSRF)
 def login_submit(request: Request, name: str = Form(""), email: str = Form(""), role: str = Form(""),
-                 next_url: str = Form("/", alias="next")):
+                 access_code: str = Form(""), next_url: str = Form("/", alias="next")):
+    settings = request.app.state.settings
+    form = {"name": name[:80], "email": email[:254], "role": role if role in ROLE_PERMISSIONS else "preparer"}   # never the code
+
+    def refuse(problems: list[str], status: int):
+        return render(request, "login.html", status_code=status, demo_users=DEMO_USERS, next=safe_next(next_url),
+                      errors=problems, form=form)
+
+    if settings.access_code:
+        who, limiter = auth.client_key(request), request.app.state.limiter
+        if limiter.blocked(who):
+            return refuse(["Too many wrong access codes. Wait a few minutes and try again."], 429)
+        if not auth.access_code_ok(access_code, settings.access_code):
+            limiter.record_failure(who)
+            with _db(request).tx() as conn:   # the attempted code is deliberately NOT logged
+                audit.record(conn, actor={"email": form["email"] or "unknown", "name": form["name"], "roles": []},
+                             action="login_denied", details={"reason": "missing or wrong access code"})
+            return refuse(["That access code isn't right. Ask whoever shared this link."], 400)
+        limiter.reset(who)
     identity, problems = auth.clean_identity(name, email, role)
     if identity is None:
-        return render(request, "login.html", status_code=400, demo_users=DEMO_USERS, next=safe_next(next_url), errors=problems,
-                      form={"name": name[:80], "email": email[:254], "role": role if role in ROLE_PERMISSIONS else "preparer"})
+        return refuse(problems, 400)
     user = auth.login_user(request, email=identity["email"], name=identity["name"], roles=[identity["role"]], method="self-declared")
     with _db(request).tx() as conn:
-        audit.record(conn, actor=user, action="login", details={"method": "self-declared", "verified": False})
+        audit.record(conn, actor=user, action="login",
+                     details={"method": "self-declared", "verified": False, "access_code_required": bool(settings.access_code)})
     return redirect(safe_next(next_url))
 
 

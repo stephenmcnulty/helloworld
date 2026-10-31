@@ -13,6 +13,7 @@ from __future__ import annotations
 import hmac
 import re
 import secrets
+import time
 from typing import Any, Callable
 from urllib.parse import quote
 
@@ -131,3 +132,40 @@ def require_user_dep(perm: str | None = None) -> Any:
 
 def login_url(next_url: str) -> str:
     return f"/login?next={quote(next_url, safe='/')}"
+
+
+# ---------------------------------------------------------------- shared access code (hosted demo)
+def access_code_ok(supplied: str, expected: str) -> bool:
+    """Constant-time comparison so response timing doesn't reveal how much of the code was right."""
+    return bool(expected) and hmac.compare_digest((supplied or "").strip().encode(), expected.encode())
+
+
+class AttemptLimiter:
+    """Blocks a client address after too many wrong access codes. In memory, so it resets on restart."""
+
+    def __init__(self, max_failures: int = 10, window_seconds: float = 300.0, clock: Callable[[], float] = time.monotonic):
+        self.max_failures, self.window, self.clock = max_failures, window_seconds, clock
+        self._failures: dict[str, list[float]] = {}
+
+    def _recent(self, key: str) -> list[float]:
+        cutoff = self.clock() - self.window
+        recent = [t for t in self._failures.get(key, []) if t > cutoff]
+        if recent:
+            self._failures[key] = recent
+        else:
+            self._failures.pop(key, None)
+        return recent
+
+    def blocked(self, key: str) -> bool:
+        return len(self._recent(key)) >= self.max_failures
+
+    def record_failure(self, key: str) -> None:
+        self._recent(key)
+        self._failures.setdefault(key, []).append(self.clock())
+
+    def reset(self, key: str) -> None:
+        self._failures.pop(key, None)
+
+
+def client_key(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
