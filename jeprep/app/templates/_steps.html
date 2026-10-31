@@ -1,0 +1,24 @@
+{% macro steps_bar(steps) %}
+<ol class="steps" aria-label="Progress">
+  {% for s in steps %}
+  <li class="steps__item steps__item--{{ s.state }}{{ ' is-viewing' if s.viewing }}"{% if s.viewing %} aria-current="step"{% endif %}>
+    {% if s.href %}<a href="{{ s.href }}">{% endif %}
+      <span class="steps__dot">{% if s.state == 'done' %}✓{% else %}{{ s.n }}{% endif %}</span>
+      <span class="steps__label">{{ s.label }}</span>
+    {% if s.href %}</a>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% endmacro %}
+
+{% macro job_summary(job, client) %}
+<dl class="summary">
+  <div><dt>Job</dt><dd>#{{ job.id }}</dd></div>
+  <div><dt>Client</dt><dd>{{ client.name }}</dd></div>
+  <div><dt>Target system</dt><dd>{{ TARGET_SYSTEMS[job.target_system] }}</dd></div>
+  <div><dt>Report</dt><dd>{{ REPORT_TYPES[job.report_type] }}</dd></div>
+  <div><dt>Pay period</dt><dd>{{ job.period_start | us_date }} - {{ job.period_end | us_date }}</dd></div>
+  <div><dt>Allocation</dt><dd>{{ 'Across entities' if job.allocate else 'None' }}</dd></div>
+  <div><dt>Status</dt><dd><span class="chip chip--{{ job.status }}">{{ STATUS_LABELS[job.status] }}</span></dd></div>
+</dl>
+{% endmacro %}

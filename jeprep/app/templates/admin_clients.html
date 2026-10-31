@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<h1>Clients</h1>
+<p class="lead">Clients, their entities and allocation percentages. Changes are written to the audit log.</p>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>Client</th><th>Entities (allocation %)</th><th>Funds</th><th>Allocation</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+  {% for c in clients %}
+    <tr>
+      <td><strong>{{ c.name }}</strong><div class="muted small">{{ c.id }}</div></td>
+      <td>{% for e in c.entities %}{{ e.code }} {{ e.alloc_pct.normalize() }}%{% if e.is_paying %} <span class="chip">pays</span>{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+      <td>{{ c.funds | length }}</td>
+      <td>{% if c.allocation_problems() == [] %}<span class="chip chip--check-pass">Ready</span>{% else %}<span class="muted small">{{ c.allocation_problems()[0] }}</span>{% endif %}</td>
+      <td>{{ 'Yes' if c.active else 'No' }}</td>
+      <td><a href="/admin/clients/{{ c.id }}">Edit</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<section class="card">
+  <h2>Add a client</h2>
+  <form method="post" action="/admin/clients/new" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Client name <input type="text" name="name" required maxlength="120"></label>
+    <label>Client id (optional) <input type="text" name="client_id" maxlength="60" placeholder="derived from the name"></label>
+    <label>Primary entity code <input type="text" name="entity_code" value="MAIN" maxlength="12"></label>
+    <label>Primary entity name <input type="text" name="entity_name" maxlength="120"></label>
+    <div class="span2 actions"><button class="btn btn--primary" type="submit">Create client</button></div>
+  </form>
+  <p class="hint">New clients start with a standard payroll chart of accounts and one fund. In production the chart of accounts would be imported from the client's accounting system.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Review queue{% endblock %}
+{% block content %}
+<h1>Review queue</h1>
+<p class="lead">Mappings and exports waiting for a Reviewer. You can't approve work you prepared yourself.</p>
+{% if items %}
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>Needs</th><th>Job</th><th>Client</th><th>Pay period</th><th>Prepared by</th><th>Waiting since</th><th></th></tr></thead>
+  <tbody>
+  {% for it in items %}
+    <tr>
+      <td><span class="chip chip--{{ it.job.status }}">{{ it.kind }}</span></td>
+      <td>#{{ it.job.id }}</td><td>{{ it.job.client_name }}</td>
+      <td>{{ it.job.period_start | us_date }} - {{ it.job.period_end | us_date }}</td>
+      <td>{{ it.by }}</td><td>{{ it.job.updated_at | timestamp }}</td>
+      <td>{% if it.own %}<span class="muted">You prepared this</span> · {% endif %}<a href="{{ it.link }}">Open</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p class="empty">Nothing is waiting for review.</p>{% endif %}
+{% endblock %}

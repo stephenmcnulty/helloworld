@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}New journal entry{% endblock %}
+{% block content %}
+<ol class="steps" aria-label="Progress">
+  {% for label in STEPS %}<li class="steps__item steps__item--{{ 'current' if loop.first else 'todo' }} {{ 'is-viewing' if loop.first }}"><span class="steps__dot">{{ loop.index }}</span><span class="steps__label">{{ label }}</span></li>{% endfor %}
+</ol>
+<h1>Step 1 - Intake</h1>
+<p class="lead">A few questions so the right mapping, target format and checks are used.</p>
+<form method="post" action="/jobs/new" class="card form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label class="span2">Client
+    <select name="client_id" required>
+      <option value="">Choose a client...</option>
+      {% for c in clients %}<option value="{{ c.id }}" {{ 'selected' if form.get('client_id') == c.id }}>{{ c.name }}{% if c.allocation_problems() == [] %} - allocation configured{% endif %}</option>{% endfor %}
+    </select>
+  </label>
+  <fieldset class="span2"><legend>Target system</legend>
+    <label class="choice"><input type="radio" name="target_system" value="intacct" {{ 'checked' if form.get('target_system', 'intacct') == 'intacct' }}> Sage Intacct <small>GL journal import CSV</small></label>
+    <label class="choice"><input type="radio" name="target_system" value="qbo" {{ 'checked' if form.get('target_system') == 'qbo' }}> QuickBooks Online <small>Journal entry import CSV</small></label>
+  </fieldset>
+  <label>Report type
+    <select name="report_type">{% for key, label in REPORT_TYPES.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+  </label>
+  <div></div>
+  <label>Pay period start <input type="date" name="period_start" value="{{ form.get('period_start') or '2026-10-01' }}" required></label>
+  <label>Pay period end <input type="date" name="period_end" value="{{ form.get('period_end') or '2026-10-15' }}" required></label>
+  <fieldset class="span2"><legend>Allocate across entities or funds?</legend>
+    <label class="choice"><input type="radio" name="allocate" value="no" {{ 'checked' if form.get('allocate') != 'yes' }}> No <small>post each line to its mapped entity</small></label>
+    <label class="choice"><input type="radio" name="allocate" value="yes" {{ 'checked' if form.get('allocate') == 'yes' }}> Yes <small>split expense lines by the client's configured percentages and add due-to / due-from lines</small></label>
+    <p class="hint">Allocation is available for clients with more than one entity configured (marked above). Percentages are managed by an Admin.</p>
+  </fieldset>
+  <div class="span2 actions"><button class="btn btn--primary" type="submit">Continue to upload</button> <a class="btn btn--ghost" href="/">Cancel</a></div>
+</form>
+{% endblock %}

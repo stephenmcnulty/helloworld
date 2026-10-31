@@ -1,0 +1,7 @@
+# Local state: database, uploaded reports, generated exports (all sensitive in real use)
+data/
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

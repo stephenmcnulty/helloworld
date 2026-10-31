@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>Welcome, {{ user.name.split(' ')[0] }}</h1>
+<p class="lead">Turn a payroll register into a journal entry file for Sage Intacct or QuickBooks Online - with validation, review and an audit trail.</p>
+<div class="actions">
+  {% if has_perm(user, 'job.create') %}<a class="btn btn--primary" href="/jobs/new">Start a new journal entry</a>{% endif %}
+  {% if has_perm(user, 'review.queue') %}<a class="btn" href="/review">Review queue{% if waiting %} <span class="badge">{{ waiting }}</span>{% endif %}</a>{% endif %}
+  {% if has_perm(user, 'admin.clients') %}<a class="btn" href="/admin/clients">Manage clients</a>{% endif %}
+  {% if has_perm(user, 'audit.view') %}<a class="btn" href="/admin/audit">View audit log</a>{% endif %}
+</div>
+
+{% if has_perm(user, 'job.work') %}
+<h2>Recent journal entry jobs</h2>
+{% if jobs %}
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>#</th><th>Client</th><th>Pay period</th><th>Target</th><th>Status</th><th>Started by</th><th>Updated</th><th></th></tr></thead>
+  <tbody>
+  {% for j in jobs %}
+  <tr>
+    <td>{{ j.id }}</td><td>{{ j.client_name }}</td><td>{{ j.period_start | us_date }} - {{ j.period_end | us_date }}</td>
+    <td>{{ TARGET_SYSTEMS[j.target_system] }}</td>
+    <td><span class="chip chip--{{ j.status }}">{{ STATUS_LABELS[j.status] }}</span></td>
+    <td>{{ j.created_by_name }}</td><td>{{ j.updated_at | timestamp }}</td>
+    <td><a href="/jobs/{{ j.id }}">Open</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<p class="empty">No jobs yet. Start a new journal entry to see the wizard.</p>
+{% endif %}
+{% else %}
+<p class="muted">Your role ({{ user.roles | map('title') | join(', ') }}) doesn't include running or reviewing journals. Use the links above.</p>
+{% endif %}
+{% endblock %}

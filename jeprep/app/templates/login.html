@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<section class="narrow">
+  <h1>Sign in</h1>
+  {% if oidc_enabled %}
+  <div class="card">
+    <h2>Single sign-on</h2>
+    <p class="muted">Sign in with your firm account (Okta). Your access role comes from your Okta group membership.</p>
+    <a class="btn btn--primary" href="/auth/okta/login?next={{ next | urlencode }}">Sign in with Okta</a>
+  </div>
+  {% endif %}
+  {% if settings.demo_mode %}
+  <div class="card card--demo">
+    <h2><span class="chip chip--demo">DEMO_MODE</span> Pick a fake user and role</h2>
+    <p class="muted">No password. These identities are fake and exist only so the demo runs without Okta. This form is switched off when <code>DEMO_MODE</code> is not set.</p>
+    <form method="post" action="/login/demo" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <label>User
+        <select name="email" id="demo-user" required>
+          {% for u in demo_users %}<option value="{{ u.email }}" data-role="{{ u.default_role }}">{{ u.name }} ({{ u.email }})</option>{% endfor %}
+        </select>
+      </label>
+      <label>Role
+        <select name="role" id="demo-role" required>
+          {% for key, label in ROLE_LABELS.items() %}<option value="{{ key }}">{{ label }} - {{ ROLE_BLURBS[key] }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="btn btn--primary" type="submit">Sign in (demo)</button>
+    </form>
+    <details class="hint">
+      <summary>Suggested demo script</summary>
+      <ol>
+        <li>Sign in as <strong>Pat Preparer</strong> (Preparer) and start a new journal entry.</li>
+        <li>Sign out, sign in as <strong>Rhea Reviewer</strong> (Reviewer) and approve from the Review queue.</li>
+        <li>Try approving your own export: sign in as Rhea as Preparer, prepare, then switch to Reviewer - it will be refused.</li>
+        <li>Sign in as <strong>Alex Admin</strong> (Admin) to read the audit log and edit allocation percentages.</li>
+      </ol>
+    </details>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ client.name }}{% endblock %}
+{% block content %}
+<p><a href="/admin/clients">&larr; All clients</a></p>
+<h1>{{ client.name }}</h1>
+<form method="post" action="/admin/clients/{{ client.id }}" class="card stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label>Name <input type="text" name="name" value="{{ client.name }}" maxlength="120" required></label>
+  <label class="choice"><input type="checkbox" name="active" {{ 'checked' if client.active }}> Active (shown in the intake dropdown)</label>
+  <h2>Entities and allocation</h2>
+  <p class="hint">Expense lines are split across entities by these percentages (they must total 100). The paying entity holds cash and liabilities; the other entities get due-to / due-from lines so each entity balances.</p>
+  <div class="table-wrap"><table class="table table--compact">
+    <thead><tr><th>Code</th><th>Name</th><th>Allocation %</th><th>Default fund</th><th>Paying entity</th></tr></thead>
+    <tbody>
+    {% for e in client.entities %}
+      <tr>
+        <td><strong>{{ e.code }}</strong></td>
+        <td><input type="text" name="name_{{ e.code }}" value="{{ e.name }}" maxlength="120"></td>
+        <td><input type="text" name="pct_{{ e.code }}" value="{{ e.alloc_pct.normalize() | string }}" size="6" inputmode="decimal"></td>
+        <td><select name="fund_{{ e.code }}"><option value="">-</option>{% for code, name in client.funds.items() %}<option value="{{ code }}" {{ 'selected' if code == e.default_fund }}>{{ code }} - {{ name }}</option>{% endfor %}</select></td>
+        <td><input type="radio" name="paying" value="{{ e.code }}" {{ 'checked' if e.is_paying }} aria-label="{{ e.code }} pays payroll"></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <div class="form-grid">
+    <label>Due-from account (asset)
+      <select name="due_from"><option value="">-</option>{% for a in client.accounts.values() %}<option value="{{ a.account_no }}" {{ 'selected' if a.account_no == client.due_from_account }}>{{ a.account_no }} {{ a.name }}</option>{% endfor %}</select></label>
+    <label>Due-to account (liability)
+      <select name="due_to"><option value="">-</option>{% for a in client.accounts.values() %}<option value="{{ a.account_no }}" {{ 'selected' if a.account_no == client.due_to_account }}>{{ a.account_no }} {{ a.name }}</option>{% endfor %}</select></label>
+  </div>
+  <div class="actions"><button class="btn btn--primary" type="submit">Save changes</button></div>
+</form>
+<section class="card">
+  <h2>Chart of accounts ({{ client.accounts | length }})</h2>
+  <div class="table-wrap"><table class="table table--compact"><thead><tr><th>Account</th><th>Name</th><th>Category</th></tr></thead>
+    <tbody>{% for a in client.accounts.values() %}<tr><td>{{ a.account_no }}</td><td>{{ a.name }}</td><td class="muted">{{ a.category }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_steps.html" import steps_bar, job_summary %}
+{% block title %}Preview{% endblock %}
+{% block content %}
+{{ steps_bar(steps) }}
+<h1>Step 4 - Preview and validation</h1>
+{{ job_summary(job, client) }}
+<p class="muted">Source file: <strong>{{ job.file_name }}</strong> · SHA-256 <code>{{ job.file_sha256[:16] }}…</code> · mapping <strong>version {{ preview.mapping_row.version }}</strong> · journal date {{ preview.journal.posting_date | us_date }} · reference <code>{{ preview.journal.reference }}</code></p>
+
+<section class="card">
+  <h2>Validation checks</h2>
+  <ul class="checks">
+    {% for c in preview.checks %}
+    <li class="check check--{{ c.status }}">
+      <span class="check__icon" aria-hidden="true">{{ {'pass': '✓', 'fail': '✗', 'warn': '!'}[c.status] }}</span>
+      <div><strong>{{ c.label }}</strong> <span class="chip chip--check-{{ c.status }}">{{ {'pass': 'Passed', 'fail': 'FAILED', 'warn': 'Warning'}[c.status] }}</span><p>{{ c.detail }}</p></div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if preview.ok %}
+    <div class="banner banner--ok">All checks passed. The journal can be sent to a Reviewer for export approval.</div>
+  {% else %}
+    <div class="banner banner--error"><strong>Export is blocked.</strong> Fix the failing checks (usually the mapping or the source report) and re-upload or change the mapping.</div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Totals tie back to the source report</h2>
+  <div class="table-wrap"><table class="table table--num">
+    <thead><tr><th>Report column</th><th class="num">Sum of rows</th><th class="num">Report's total row</th><th class="num">Difference</th><th class="num">In journal</th><th class="num">Difference</th></tr></thead>
+    <tbody>
+    {% for r in preview.tie_rows %}
+      <tr class="{{ 'row-bad' if (r.vs_stated is not none and r.vs_stated != zero) or (not r.note and r.vs_journal != zero) }}">
+        <td>{{ r.column }}{% if r.note %} <span class="muted">({{ r.note }})</span>{% endif %}</td>
+        <td class="num">{{ r.source_total | money }}</td>
+        <td class="num">{{ r.stated_total | money if r.stated_total is not none else '-' }}</td>
+        <td class="num">{{ r.vs_stated | money if r.vs_stated is not none else '-' }}</td>
+        <td class="num">{{ r.journal_amount | money }}</td>
+        <td class="num">{{ r.vs_journal | money if not r.note else '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section class="card">
+  <h2>Draft journal entry <span class="muted">- {{ preview.journal.lines | length }} lines</span></h2>
+  <div class="table-wrap"><table class="table table--num">
+    <thead><tr><th>#</th><th>Account</th><th>Entity</th><th>Fund</th><th class="num">Debit</th><th class="num">Credit</th><th>Memo</th></tr></thead>
+    <tbody>
+    {% for l in preview.journal.lines %}
+      <tr class="{{ 'row-interco' if l.kind == 'interco' }}">
+        <td>{{ l.line_no }}</td><td>{{ l.account_no }} <span class="muted">{{ l.account_name }}</span></td><td>{{ l.entity }}</td><td>{{ l.fund }}</td>
+        <td class="num">{{ l.debit | money if l.debit else '' }}</td><td class="num">{{ l.credit | money if l.credit else '' }}</td>
+        <td>{{ l.memo }}{% if l.kind == 'interco' %} <span class="chip chip--interco">inter-entity</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="4">Totals</td><td class="num">{{ preview.journal.total_debits | money }}</td><td class="num">{{ preview.journal.total_credits | money }}</td><td></td></tr></tfoot>
+  </table></div>
+  {% if by_entity | length > 1 %}
+  <h3>Balance by entity</h3>
+  <div class="table-wrap"><table class="table table--num table--compact">
+    <thead><tr><th>Entity</th><th class="num">Debits</th><th class="num">Credits</th><th>Balanced?</th></tr></thead>
+    <tbody>{% for e, (d, c) in by_entity.items() %}<tr><td>{{ e }}</td><td class="num">{{ d | money }}</td><td class="num">{{ c | money }}</td><td>{{ '✓' if d == c else '✗ out of balance' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% if preview.journal.zero_columns %}<p class="muted">Columns with a zero total were skipped: {{ preview.journal.zero_columns | join(', ') }}.</p>{% endif %}
+</section>
+
+<div class="actions">
+  <a class="btn" href="/jobs/{{ job.id }}/mapping">Back to mapping</a>
+  {% if job.status == 'ready' %}
+    {% if preview.ok %}
+    <form method="post" action="/jobs/{{ job.id }}/request-export" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn--primary" type="submit">Request export approval</button></form>
+    {% else %}
+    <button class="btn btn--primary" type="button" disabled title="All checks must pass">Request export approval (blocked)</button>
+    {% endif %}
+  {% else %}
+    <a class="btn btn--primary" href="/jobs/{{ job.id }}/export">Go to export</a>
+  {% endif %}
+</div>
+{% endblock %}

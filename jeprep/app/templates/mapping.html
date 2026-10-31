@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% from "_steps.html" import steps_bar, job_summary %}
+{% block title %}Mapping{% endblock %}
+
+{% macro choose(name, options, current, css='') %}
+<select name="{{ name }}" class="{{ css }}">
+  <option value="">-</option>
+  {% for value, label in options %}<option value="{{ value }}" {{ 'selected' if value == current }}>{{ label }}</option>{% endfor %}
+</select>
+{% endmacro %}
+
+{% macro origin_badge(l) %}
+<span class="chip chip--origin-{{ l.origin }}">{{ {'rules': 'Rules', 'ai': 'AI suggestion', 'mock': 'MOCK suggestion', 'saved': 'Saved mapping', 'manual': 'Manual'}[l.origin] or l.origin }}</span>
+{% if l.confidence is not none %}<span class="conf {{ 'conf--low' if l.confidence < 0.7 }}">{{ (l.confidence * 100) | round | int }}%</span>{% endif %}
+{% endmacro %}
+
+{% block content %}
+{{ steps_bar(steps) }}
+<h1>Step 3 - Mapping review</h1>
+{{ job_summary(job, client) }}
+
+{% if mode == 'approved' %}
+  <div class="banner banner--ok">
+    {% if matched %}<strong>Matched a saved mapping.</strong> This report's column layout is identical to one already approved for {{ client.name }}.
+    {% else %}<strong>Approved mapping.</strong>{% endif %}
+    Using <strong>version {{ mapping.version }}</strong>, approved by {{ mapping.decided_by }} on {{ mapping.decided_at | timestamp }}.
+  </div>
+{% elif mode == 'edit' %}
+  <div class="banner banner--warn"><strong>Draft - not approved.</strong> {{ mapping.notice }}
+    {% if mapping.source in ('mock',) %}<br><strong>This is a mock suggestion, not an AI answer.</strong>{% endif %}
+  </div>
+{% elif mode == 'review' %}
+  <div class="banner banner--info"><strong>Waiting for approval.</strong> Submitted by {{ mapping.submitted_by }} on {{ mapping.submitted_at | timestamp }}. A Reviewer other than the people who prepared it must approve before any journal can be built.</div>
+{% elif mode == 'rejected' %}
+  <div class="banner banner--error"><strong>Sent back by {{ mapping.decided_by }}.</strong> {{ mapping.decision_note or 'No note left.' }}</div>
+{% endif %}
+
+{% if mode == 'edit' %}
+<form method="post" action="/jobs/{{ job.id }}/mapping/save" class="mapping-form" id="mapping-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p class="hint">Each report column is shown next to the journal line it becomes. <strong>Amount</strong> columns are summed into one line (an <em>offset account</em> adds the matching liability for employer-side costs). Anything left as "-" counts as unmapped and blocks export.</p>
+  <div class="table-wrap"><table class="table table--mapping">
+    <thead><tr><th>Report column</th><th>Role</th><th>Side</th><th>GL account</th><th>Offset account</th><th>Entity</th><th>Fund</th><th>Reviewed</th></tr></thead>
+    <tbody>
+    {% for l in lines %}
+      {% set i = loop.index0 %}{% set info = col_info[l.source_column] %}
+      <tr class="map-row {{ 'is-unassigned' if not l.role }} {{ 'is-needs-review' if l.needs_human_review }}">
+        <td class="col-name">
+          <input type="hidden" name="line_{{ i }}_column" value="{{ l.source_column }}">
+          <strong>{{ l.source_column }}</strong>
+          <div class="muted small">{% if info.is_amount %}Column total {{ info.total | money }}{% else %}e.g. {{ info.sample }}{% endif %}</div>
+          <div class="origin">{{ origin_badge(l) }}</div>
+          {% if l.rationale %}<div class="rationale small">{{ l.rationale }}</div>{% endif %}
+        </td>
+        <td>{{ choose('line_' ~ i ~ '_role', role_opts, l.role, 'js-role') }}</td>
+        <td class="amt">{{ choose('line_' ~ i ~ '_side', side_opts, l.side) }}</td>
+        <td class="amt">{{ choose('line_' ~ i ~ '_gl_account', account_opts, l.gl_account) }}</td>
+        <td class="amt">{{ choose('line_' ~ i ~ '_offset_account', account_opts, l.offset_account) }}</td>
+        <td class="amt">{{ choose('line_' ~ i ~ '_entity', entity_opts, l.entity) }}</td>
+        <td class="amt">{{ choose('line_' ~ i ~ '_fund', fund_opts, l.fund) }}</td>
+        <td class="center">{% if l.origin in ('ai', 'mock') %}<input type="checkbox" name="line_{{ i }}_reviewed" class="js-reviewed" {{ 'checked' if l.reviewed }} aria-label="Reviewed {{ l.source_column }}">{% else %}<span class="muted">-</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if problems %}
+  <div class="banner banner--warn"><strong>Before this can be submitted:</strong>
+    <ul>{% for p in problems[:8] %}<li>{{ p }}</li>{% endfor %}{% if problems | length > 8 %}<li>...and {{ problems | length - 8 }} more</li>{% endif %}</ul></div>
+  {% endif %}
+  <div class="actions sticky-actions">
+    <button class="btn" type="submit">Save draft</button>
+    <button class="btn" type="submit" formaction="/jobs/{{ job.id }}/mapping/suggest">{% if ai_configured %}Suggest a mapping with Claude{% else %}Suggest a mapping (MOCK - no API key){% endif %}</button>
+    <button class="btn btn--primary" type="submit" formaction="/jobs/{{ job.id }}/mapping/submit">Submit for approval</button>
+    <button class="btn btn--ghost" type="button" id="check-all-reviewed">Tick all AI/mock lines as reviewed</button>
+    {% if has_approved_fallback %}<button class="btn btn--ghost" type="submit" formaction="/jobs/{{ job.id }}/mapping/discard">Discard draft</button>{% endif %}
+  </div>
+</form>
+
+<section class="card">
+  <h2>About suggestions</h2>
+  <p>{% if ai_configured %}An Anthropic API key is configured, so <strong>Suggest a mapping</strong> sends <em>redacted</em> column headers and a few redacted sample rows to <code>{{ model }}</code>.
+  {% else %}No <code>ANTHROPIC_API_KEY</code> is set, so <strong>Suggest a mapping</strong> uses a clearly labelled <strong>mock</strong> keyword heuristic. No data leaves this server.{% endif %}
+  Suggestions only fill columns that are still unassigned, are never approved automatically, and each one must be ticked as reviewed before you can submit.</p>
+  <details><summary>Show exactly what would be sent to the model ({{ redaction.values_redacted }} values redacted{% if redaction.columns_redacted %} in: {{ redaction.columns_redacted | join(', ') }}{% endif %})</summary>
+    <pre class="code">{{ redaction.payload | tojson(indent=2) }}</pre>
+    <p class="hint">Employee names and ID numbers become tokens (EMP_001 ...). The token map stays in memory on this server and is used to restore real values in the model's answer.</p>
+  </details>
+</section>
+
+{% else %}
+  <div class="table-wrap"><table class="table table--mapping">
+    <thead><tr><th>Report column</th><th>Role</th><th>Side</th><th>GL account</th><th>Offset account</th><th>Entity</th><th>Fund</th></tr></thead>
+    <tbody>
+    {% for l in lines %}{% set info = col_info[l.source_column] %}
+      <tr>
+        <td class="col-name"><strong>{{ l.source_column }}</strong>
+          <div class="muted small">{% if info.is_amount %}Column total {{ info.total | money }}{% else %}e.g. {{ info.sample }}{% endif %}</div>
+          <div class="origin">{{ origin_badge(l) }}</div>
+          {% if l.rationale %}<div class="rationale small">{{ l.rationale }}</div>{% endif %}</td>
+        <td>{{ COLUMN_ROLE_LABELS[l.role] if l.role else '-' }}</td>
+        <td>{{ l.side | title if l.side else '' }}</td>
+        <td>{% if l.gl_account %}{{ l.gl_account }} <span class="muted">{{ client.accounts[l.gl_account].name if l.gl_account in client.accounts }}</span>{% endif %}</td>
+        <td>{% if l.offset_account %}{{ l.offset_account }} <span class="muted">{{ client.accounts[l.offset_account].name if l.offset_account in client.accounts }}</span>{% endif %}</td>
+        <td>{{ l.entity }}</td><td>{{ l.fund }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+
+  {% if mode == 'approved' %}
+    <div class="actions">
+      <a class="btn btn--primary" href="/jobs/{{ job.id }}/preview">Continue to preview</a>
+      {% if job.status == 'ready' %}
+      <form method="post" action="/jobs/{{ job.id }}/mapping/change" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn" type="submit">Propose changes (creates a new version for approval)</button></form>
+      {% endif %}
+    </div>
+  {% elif mode == 'review' %}
+    {% if can_approve %}
+    <div class="card">
+      <h2>Reviewer decision</h2>
+      {% if is_author %}<p class="banner banner--warn">You prepared this mapping. The server will refuse your approval - a different Reviewer has to approve it.</p>{% endif %}
+      <div class="actions">
+        <form method="post" action="/jobs/{{ job.id }}/mapping/approve" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn--primary" type="submit">Approve as the next version</button></form>
+        <form method="post" action="/jobs/{{ job.id }}/mapping/reject" class="inline-form stack-h"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="text" name="note" placeholder="Why is it being sent back?" maxlength="300" required><button class="btn" type="submit">Send back</button></form>
+      </div>
+    </div>
+    {% else %}
+    <p class="muted">Only a Reviewer can approve. You can <a href="/">return home</a> and ask one to open the Review queue.</p>
+    {% endif %}
+  {% elif mode == 'rejected' %}
+    <form method="post" action="/jobs/{{ job.id }}/mapping/reopen"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn--primary" type="submit">Reopen the draft and fix it</button></form>
+  {% endif %}
+{% endif %}
+{% endblock %}

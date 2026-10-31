@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<h1>Audit log</h1>
+<p class="lead">Who did what, when, which mapping version was used, the SHA-256 of each uploaded file, and who approved each export. Entries are append-only and hash-chained.</p>
+<div class="banner {{ 'banner--ok' if chain.ok else 'banner--error' }}">
+  {% if chain.ok %}<strong>Hash chain verified</strong> - {{ chain.entries }} entries, none altered.{% else %}<strong>TAMPERING DETECTED</strong> - the chain breaks at entry #{{ chain.broken_at }}.{% endif %}
+</div>
+<form method="get" action="/admin/audit" class="filters">
+  <label>Action <select name="action"><option value="">All</option>{% for a in actions %}<option value="{{ a }}" {{ 'selected' if a == f_action }}>{{ a }}</option>{% endfor %}</select></label>
+  <label>Person <input type="text" name="actor" value="{{ f_actor }}" placeholder="email contains"></label>
+  <label>Job # <input type="text" name="job" value="{{ f_job }}" size="5"></label>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="table-wrap"><table class="table table--audit">
+  <thead><tr><th>#</th><th>When (UTC)</th><th>Who</th><th>Action</th><th>Client</th><th>Job</th><th>Mapping v</th><th>File SHA-256</th><th>Details</th></tr></thead>
+  <tbody>
+  {% for e in entries %}
+    <tr>
+      <td>{{ e.id }}</td><td class="nowrap">{{ e.ts | timestamp }}</td>
+      <td>{{ e.actor_name }}<div class="muted small">{{ e.actor_email }}{% if e.actor_roles %} · {{ e.actor_roles }}{% endif %}</div></td>
+      <td><span class="chip chip--action {{ 'chip--denied' if 'denied' in e.action or 'rejected' in e.action or 'failed' in e.action }}">{{ e.action }}</span></td>
+      <td>{{ e.client_id or '' }}</td><td>{% if e.job_id %}<a href="/admin/audit?job={{ e.job_id }}">#{{ e.job_id }}</a>{% endif %}</td>
+      <td>{{ e.mapping_version or '' }}</td>
+      <td>{% if e.file_sha256 %}<code title="{{ e.file_sha256 }}">{{ e.file_sha256[:12] }}…</code>{% endif %}</td>
+      <td class="small details">{{ e.details if e.details != '{}' else '' }}</td>
+    </tr>
+  {% else %}<tr><td colspan="9" class="empty">No entries match.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<div class="actions">
+  {% if page > 1 %}<a class="btn" href="/admin/audit?page={{ page - 1 }}&action={{ f_action | urlencode }}&actor={{ f_actor | urlencode }}&job={{ f_job | urlencode }}">Newer</a>{% endif %}
+  {% if has_more %}<a class="btn" href="/admin/audit?page={{ page + 1 }}&action={{ f_action | urlencode }}&actor={{ f_actor | urlencode }}&job={{ f_job | urlencode }}">Older</a>{% endif %}
+</div>
+<section class="card">
+  <h2>File retention</h2>
+  <p>Uploaded reports and generated exports are deleted automatically {{ retention_days }} days after they were stored (checked at startup and on demand). Individual jobs can also delete the source report right after export.</p>
+  <form method="post" action="/admin/purge"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn" type="submit">Run retention purge now</button></form>
+</section>
+{% endblock %}

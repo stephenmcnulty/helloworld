@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_steps.html" import steps_bar, job_summary %}
+{% block title %}Upload report{% endblock %}
+{% block content %}
+{{ steps_bar(steps) }}
+<h1>Step 2 - Upload the {{ REPORT_TYPES[job.report_type] | lower }}</h1>
+{{ job_summary(job, client) }}
+<form method="post" action="/jobs/{{ job.id }}/upload" enctype="multipart/form-data" class="card stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label>Report file (.csv or .xlsx, up to {{ max_mb }} MB)
+    <input type="file" name="file" accept=".csv,.xlsx" required>
+  </label>
+  <p class="hint">The file is validated (type, size, content), stored privately on the server under a random name, and fingerprinted (SHA-256) for the audit log.
+  {% if job.file_name %}Currently uploaded: <strong>{{ job.file_name }}</strong>. Uploading again replaces it and re-checks the layout.{% endif %}</p>
+  <div class="actions"><button class="btn btn--primary" type="submit">Upload and check layout</button>
+    {% if job.file_name %}<a class="btn" href="/jobs/{{ job.id }}/mapping">Continue to mapping</a>{% endif %}</div>
+</form>
+{% if samples %}
+<section class="card card--demo">
+  <h2><span class="chip chip--demo">DEMO</span> Synthetic sample files for {{ client.name }}</h2>
+  <ul class="plain">
+  {% for s in samples %}
+    <li><a href="/demo-files/{{ s.filename }}">{{ s.filename }}</a> - <strong>{{ s.title }}</strong><br><span class="muted">{{ s.description }} Pay period {{ s.period_start | us_date }}-{{ s.period_end | us_date }}.</span></li>
+  {% endfor %}
+  </ul>
+  <p class="hint">Download one, then upload it above. Match the pay period you entered in step 1 to the file's period.</p>
+</section>
+{% endif %}
+{% endblock %}
