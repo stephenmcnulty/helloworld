@@ -1079,12 +1079,12 @@ function viewAbout() {
   <section class="panel"><p>This is a click-through of the <b>Journal Entry Prep</b> tool. It runs entirely in your browser on synthetic data: nothing is sent anywhere and nothing is posted to Sage Intacct or QuickBooks Online. Reloading the page resets it.</p>
     <p>The real tool is a Python (FastAPI + SQLite) web app. This page re-implements its engine in JavaScript so it can run without a server, and that engine was checked against the Python one: the same inputs produce identical journal lines, check results and export files.</p></section>
   <section class="panel"><h2>What differs from the real tool</h2><ul>
-    <li><b>Sign-in</b> is the demo user switcher. The real tool uses Okta (OIDC) and shows this switcher only when DEMO_MODE is on.</li>
+    <li><b>Sign-in</b> here is the "Acting as" switcher at the top right. In the real tool each person types a name, email and role on a sign-in form. None of it is verified yet, so it is for synthetic data only; Okta can be added later.</li>
     <li><b>Suggestions</b> always use the labelled offline mock here. The real tool calls Claude when an API key is set, after redacting names and IDs.</li>
     <li><b>Files</b> are CSV only and held in memory. The real tool also reads Excel, stores uploads privately with a retention limit, and offers a real download.</li>
     <li><b>One job at a time</b>, and no database. The audit log lives in memory for this session.</li></ul></section>
   <section class="panel"><h2>Still needed before production</h2><ul>
-    <li>Okta app registration and group provisioning.</li><li>Intacct and QuickBooks import layouts checked against each client's own template. The column layouts here are a best-effort reconstruction.</li>
+    <li>Real sign-in (for example Okta), because the name, email and role form doesn't verify anyone.</li><li>Intacct and QuickBooks import layouts checked against each client's own template. The column layouts here are a best-effort reconstruction.</li>
     <li>Real charts of accounts, entities and funds per client.</li><li>IT and security review, including whether redacted payroll structure may be sent to the Anthropic API.</li></ul></section>
   <section class="panel"><p class="muted small">Source: branch <code>claude/focused-gates-wj776d</code> of <code>stephenmcnulty/helloworld</code>, folder <code>jeprep/</code> (this page is built from <code>jeprep/artifact/</code>).</p></section>`;
 }

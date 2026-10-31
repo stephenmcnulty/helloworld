@@ -1,43 +1,26 @@
 import pytest
 
-from app.auth import has_perm, roles_from_groups, safe_next, setup_oauth
-from app.config import Settings
-
-OKTA = {"OKTA_ISSUER": "https://acme.okta.com", "OKTA_CLIENT_ID": "cid", "OKTA_CLIENT_SECRET": "sec", "SECRET_KEY": "k" * 40}
+from app.auth import clean_identity, has_perm, safe_next
 
 
-@pytest.fixture
-def okta_settings(tmp_path):
-    return Settings.from_env({**OKTA, "DATA_DIR": str(tmp_path)})
+def test_identity_is_trimmed_lowercased_and_collapsed():
+    who, problems = clean_identity("  Dana \t  Lee\n", "  Dana.Lee@Example.ORG ", "reviewer")
+    assert problems == [] and who == {"name": "Dana Lee", "email": "dana.lee@example.org", "role": "reviewer"}
 
 
-def test_okta_groups_map_to_roles(okta_settings):
-    assert roles_from_groups(["Everyone", "JE-Reviewer"], okta_settings) == ["reviewer"]
-    assert roles_from_groups(["JE-Preparer", "JE-Admin"], okta_settings) == ["admin", "preparer"]
-    assert roles_from_groups("JE-Admin", okta_settings) == ["admin"]          # a single group arrives as a string
+def test_control_characters_are_stripped_from_names():
+    who, _ = clean_identity("Dana\x00\x1b[31m Lee", "d@example.org", "preparer")
+    assert "\x00" not in who["name"] and "\x1b" not in who["name"]
 
 
-def test_no_matching_group_means_no_access(okta_settings):
-    assert roles_from_groups(["Everyone", "Finance"], okta_settings) == []
-    assert roles_from_groups(None, okta_settings) == []
-
-
-def test_group_names_are_configurable(tmp_path):
-    s = Settings.from_env({**OKTA, "DATA_DIR": str(tmp_path), "OKTA_GROUP_REVIEWER": "Firm-JE-Approvers"})
-    assert roles_from_groups(["Firm-JE-Approvers"], s) == ["reviewer"]
-    assert roles_from_groups(["JE-Reviewer"], s) == []
-
-
-def test_oidc_client_is_registered_for_okta_with_pkce(okta_settings):
-    oauth = setup_oauth(okta_settings)
-    client = oauth.create_client("okta")
-    assert client._server_metadata_url == "https://acme.okta.com/.well-known/openid-configuration"
-    assert client.client_kwargs["scope"] == "openid profile email groups"
-    assert client.client_kwargs["code_challenge_method"] == "S256"
-
-
-def test_no_oidc_client_without_okta_settings(tmp_path):
-    assert setup_oauth(Settings.from_env({"DEMO_MODE": "true", "DATA_DIR": str(tmp_path)})) is None
+@pytest.mark.parametrize("name,email,role", [
+    ("", "a@b.co", "preparer"), ("A", "", "preparer"), ("A", "a@b", "preparer"), ("A", "a@b.co", ""), ("A", "a@b.co", "root"),
+    ("A", "a b@c.co", "preparer"), ("A", "a@@b.co", "preparer"), ("A", "<a>@b.co", "preparer"), ("A" * 81, "a@b.co", "preparer"),
+    ("A", "a" * 250 + "@b.co", "preparer"),
+])
+def test_bad_identities_are_rejected(name, email, role):
+    who, problems = clean_identity(name, email, role)
+    assert who is None and problems
 
 
 def test_permissions_by_role():

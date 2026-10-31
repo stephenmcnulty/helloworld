@@ -1,5 +1,6 @@
 """End-to-end tests through the real HTTP app (cookies, CSRF, roles, audit)."""
 import csv
+import html
 import io
 import re
 from pathlib import Path
@@ -37,8 +38,9 @@ class Browser:
     def token(self, path="/login"):
         return TOKEN_RE.search(self.http.get(path).text).group(1)
 
-    def login(self, email, role):
-        r = self.http.post("/login/demo", data={"email": email, "role": role, "csrf_token": self.token("/login"), "next": "/"})
+    def login(self, email, role, name=None):
+        name = name or next((u["name"] for u in DEMO_USERS if u["email"] == email), email.split("@")[0])
+        r = self.http.post("/login", data={"name": name, "email": email, "role": role, "csrf_token": self.token("/login"), "next": "/"})
         assert r.status_code == 303, r.text
         return self
 
@@ -103,7 +105,7 @@ def test_anonymous_users_are_sent_to_login(app):
 
 def test_demo_banner_and_security_headers(app):
     r = Browser(app).get("/login")
-    assert "DEMO - synthetic data only" in r.text and "DEMO_MODE" in r.text
+    assert "DEMO - synthetic data only" in r.text and "self-declared" in r.text
     assert "default-src 'self'" in r.headers["content-security-policy"]
     assert r.headers["x-frame-options"] == "DENY" and r.headers["x-content-type-options"] == "nosniff"
     assert r.headers["cache-control"] == "no-store"
@@ -113,23 +115,63 @@ def test_post_without_csrf_token_is_refused(app):
     b = Browser(app, PAT, "preparer")
     r = b.http.post("/jobs/new", data={"client_id": "st-brigid"})
     assert r.status_code == 403
-    assert Browser(app).http.post("/login/demo", data={"email": PAT, "role": "preparer"}).status_code == 403
+    assert Browser(app).http.post("/login", data={"name": "Pat", "email": PAT, "role": "preparer"}).status_code == 403
 
 
 def test_open_redirect_in_next_is_neutralised(app):
     b = Browser(app)
-    r = b.http.post("/login/demo", data={"email": PAT, "role": "preparer", "csrf_token": b.token(), "next": "//evil.example"})
+    r = b.http.post("/login", data={"name": "Pat", "email": PAT, "role": "preparer", "csrf_token": b.token(), "next": "//evil.example"})
     assert r.headers["location"] == "/"
 
 
-def test_demo_login_is_disabled_when_demo_mode_is_off(tmp_path):
-    settings = Settings.from_env({"OKTA_ISSUER": "https://example.okta.com", "OKTA_CLIENT_ID": "id", "OKTA_CLIENT_SECRET": "secret",
-                                  "SECRET_KEY": "k" * 40, "DATA_DIR": str(tmp_path)})
-    b = Browser(create_app(settings))
-    page = b.get("/login")
-    assert "Sign in with Okta" in page.text and "DEMO_MODE login" not in page.text and "demo-user" not in page.text
-    assert b.http.post("/login/demo", data={"email": PAT, "role": "preparer"}).status_code == 404
-    assert b.get("/demo-files/st-brigid_payroll_2026-10-15.csv").status_code == 303   # not signed in
+def test_okta_is_gone_and_signin_is_a_name_email_role_form(app):
+    page = Browser(app).get("/login").text
+    assert "Okta" in page and "Single sign-on (Okta) will be added later" in page       # mentioned only as a future item
+    assert 'name="name"' in page and 'name="email"' in page and 'name="role"' in page
+    assert "Sign in with Okta" not in page and "/auth/okta" not in page
+    assert Browser(app).get("/auth/okta/login").status_code == 404 and Browser(app).get("/login/demo").status_code in (404, 405)
+
+
+def test_signin_records_the_typed_identity_and_audits_it_as_unverified(app):
+    b = Browser(app).login("  Dana.Lee@Example.ORG ", "reviewer", name="  Dana   Lee  ")
+    page = b.get("/").text
+    assert "Dana Lee" in page and "Reviewer" in page
+    with app.state.db.read() as conn:
+        entry = audit.list_entries(conn, action="login")[0]
+    assert (entry["actor_email"], entry["actor_name"], entry["actor_roles"]) == ("dana.lee@example.org", "Dana Lee", "reviewer")
+    assert '"method":"self-declared"' in entry["details"] and '"verified":false' in entry["details"]
+
+
+@pytest.mark.parametrize("name,email,role,message", [
+    ("", PAT, "preparer", "Enter your name"),
+    ("Pat", "", "preparer", "Enter your email"),
+    ("Pat", "not-an-email", "preparer", "doesn't look like an email"),
+    ("Pat", "a b@example.com", "preparer", "doesn't look like an email"),
+    ("Pat", "<script>@example.com", "preparer", "doesn't look like an email"),
+    ("Pat", PAT, "superuser", "Choose a role"),
+    ("P" * 81, PAT, "preparer", "at most 80"),
+])
+def test_signin_rejects_bad_input_and_keeps_what_was_typed(app, name, email, role, message):
+    b = Browser(app)
+    r = b.http.post("/login", data={"name": name, "email": email, "role": role, "csrf_token": b.token("/login")})
+    assert r.status_code == 400
+    assert message in html.unescape(r.text)
+    assert b.get("/").status_code == 303                       # still not signed in
+
+
+def test_signin_form_prefill_links_do_not_sign_anyone_in(app):
+    b = Browser(app)
+    page = b.get("/login?name=Pat+Preparer&email=pat.preparer%40demo.example&role=preparer").text
+    assert 'value="Pat Preparer"' in page and 'value="pat.preparer@demo.example"' in page and re.search(r'value="preparer"\s+checked', page)
+    assert b.get("/").status_code == 303
+    hostile = b.get('/login?name=%22%3E%3Cscript%3Ealert(1)%3C/script%3E&email=x').text
+    assert "<script>alert(1)" not in hostile                    # prefill is escaped
+
+
+def test_production_is_refused_while_signin_is_self_declared(tmp_path):
+    from app.config import ConfigError
+    with pytest.raises(ConfigError, match="self-declared"):
+        Settings.from_env({"DEMO_MODE": "true", "APP_ENV": "production", "DATA_DIR": str(tmp_path)})
 
 
 def test_roles_limit_what_each_user_can_open(app):

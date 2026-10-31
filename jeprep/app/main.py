@@ -35,14 +35,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     for folder in (settings.upload_dir, settings.export_dir):
         storage.ensure_private_dir(settings.data_dir)
         storage.ensure_private_dir(folder)
-    app.state.oauth = auth.setup_oauth(settings)
 
     if settings.demo_mode:
         from .demo.seed import seed_demo
 
         if seed_demo(db):
             log.warning("DEMO_MODE: seeded synthetic clients and saved mappings.")
-        log.warning("DEMO_MODE is ON: anyone can sign in as a fake user. Never run this way with real data.")
+    log.warning("Sign-in is self-declared: names, emails and roles are not verified. Do not use with real data.")
     removed = storage.purge_expired(settings, db)
     if removed:
         log.info("Retention purge removed %d file(s) at startup.", len(removed))

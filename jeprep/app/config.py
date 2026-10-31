@@ -1,7 +1,7 @@
 """Runtime configuration, read only from environment variables (and an optional local .env).
 
-No secret has a default value that would be safe to ship: SECRET_KEY, OKTA_CLIENT_SECRET and
-ANTHROPIC_API_KEY are only ever read from the environment.
+No secret has a default value that would be safe to ship: SECRET_KEY and ANTHROPIC_API_KEY are only
+ever read from the environment.
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def load_dotenv(path: Path, env: dict[str, str] | None = None) -> None:
 
 @dataclass(frozen=True)
 class Settings:
-    demo_mode: bool
+    demo_mode: bool          # seeds synthetic data and offers the sample files; sign-in is the same either way
     app_env: str
     secret_key: str
     data_dir: Path
@@ -60,19 +60,8 @@ class Settings:
     retention_days: int
     delete_after_export_default: bool
     cookie_secure: bool
-    okta_issuer: str
-    okta_client_id: str
-    okta_client_secret: str
-    okta_redirect_uri: str
-    okta_group_preparer: str
-    okta_group_reviewer: str
-    okta_group_admin: str
     anthropic_api_key: str
     anthropic_model: str
-
-    @property
-    def okta_configured(self) -> bool:
-        return bool(self.okta_issuer and self.okta_client_id and self.okta_client_secret)
 
     @property
     def ai_configured(self) -> bool:
@@ -83,10 +72,8 @@ class Settings:
         e = os.environ if env is None else env
         data_dir = Path(e.get("DATA_DIR") or BASE_DIR / "data").resolve()
         demo_mode = _as_bool(e.get("DEMO_MODE"), False)
-        secret = e.get("SECRET_KEY", "")
-        if not secret and demo_mode:
-            # Demo only: a per-process key. Sessions are invalidated on every restart.
-            secret = secrets.token_urlsafe(48)
+        # Signs the session cookie. Without one, use a per-process key (everyone is signed out on restart).
+        secret = e.get("SECRET_KEY", "") or secrets.token_urlsafe(48)
         settings = cls(
             demo_mode=demo_mode,
             app_env=(e.get("APP_ENV") or "demo").lower(),
@@ -101,13 +88,6 @@ class Settings:
             retention_days=_as_int(e.get("UPLOAD_RETENTION_DAYS"), 30),
             delete_after_export_default=_as_bool(e.get("DELETE_AFTER_EXPORT_DEFAULT"), True),
             cookie_secure=_as_bool(e.get("COOKIE_SECURE"), False),
-            okta_issuer=(e.get("OKTA_ISSUER") or "").rstrip("/"),
-            okta_client_id=e.get("OKTA_CLIENT_ID", ""),
-            okta_client_secret=e.get("OKTA_CLIENT_SECRET", ""),
-            okta_redirect_uri=e.get("OKTA_REDIRECT_URI", ""),
-            okta_group_preparer=e.get("OKTA_GROUP_PREPARER", "JE-Preparer"),
-            okta_group_reviewer=e.get("OKTA_GROUP_REVIEWER", "JE-Reviewer"),
-            okta_group_admin=e.get("OKTA_GROUP_ADMIN", "JE-Admin"),
             anthropic_api_key=e.get("ANTHROPIC_API_KEY", ""),
             anthropic_model=e.get("ANTHROPIC_MODEL", "claude-opus-5-5"),
         )
@@ -116,12 +96,10 @@ class Settings:
         return settings
 
     def validate(self) -> None:
-        if self.demo_mode and self.app_env == "production":
-            raise ConfigError("DEMO_MODE=true is not allowed when APP_ENV=production.")
-        if not self.demo_mode and not self.okta_configured:
+        if self.app_env == "production":
             raise ConfigError(
-                "Authentication is not configured. Either set DEMO_MODE=true (fake users, demo only) "
-                "or set OKTA_ISSUER, OKTA_CLIENT_ID and OKTA_CLIENT_SECRET."
+                "Sign-in is self-declared (the name, email and role a person types are not verified), so "
+                "APP_ENV=production is refused until a real identity provider such as Okta is added."
             )
-        if not self.secret_key or len(self.secret_key) < 32:
-            raise ConfigError("SECRET_KEY must be set (at least 32 characters) when DEMO_MODE is off.")
+        if len(self.secret_key) < 32:
+            raise ConfigError("SECRET_KEY must be at least 32 characters (or leave it unset for a per-process key).")

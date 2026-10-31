@@ -15,17 +15,17 @@ pip install -r requirements-dev.txt
 ./run_demo.sh            # http://127.0.0.1:8000  (sets DEMO_MODE=true)
 ```
 
-Open <http://127.0.0.1:8000>, pick a fake user and role, and follow the [demo script](#demo-script). No Okta account and no API key are needed. To start over, stop the server and delete the `data/` folder.
+Open <http://127.0.0.1:8000>, enter a name, email and role on the sign-in form (the page has one-click links that pre-fill the demo people), and follow the [demo script](#demo-script). No account and no API key are needed. To start over, stop the server and delete the `data/` folder.
 
 ```bash
-python -m pytest         # 178 tests: validation, allocation math, export formats, redaction, security, end-to-end flows
+python -m pytest         # ~195 tests: validation, allocation math, export formats, redaction, security, end-to-end flows
 ```
 
 ## Demo script
 
-Sample files live in `demo_data/` (and are offered as downloads on the Upload step in demo mode). Everything - clients, names, IDs, amounts - is randomly generated.
+On the sign-in page, the *Fill in the form as a demo person* links pre-fill the name, email and role below (you still press Continue). Sample files live in `demo_data/` (and are offered as downloads on the Upload step in demo mode). Everything - clients, names, IDs, amounts - is randomly generated.
 
-| # | Sign in as | Do this | What it shows |
+| # | Fill in the sign-in form as | Do this | What it shows |
 |---|---|---|---|
 | 1 | **Pat Preparer** (Preparer) | New journal entry → *Our Lady of Grace*, Intacct, 10/01-10/15/2026, **allocate: Yes** → upload `our-lady-grace_payroll_2026-10-15.csv` | Layout is **detected** as matching saved mapping **v2**; goes straight to preview. Allocation splits expense 60/30/10 Parish/School/Gift Store and adds due-to/due-from lines; every entity balances. |
 | 2 | Pat | Preview → **Request export approval** | Five checks, all with plain-language results. |
@@ -84,12 +84,9 @@ Environment variables (or a local `.env`, see `.env.example`; real env vars win)
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `DEMO_MODE` | Fake-user login + auto-seeded synthetic data. **Demo only.** | off |
-| `OKTA_ISSUER` / `OKTA_CLIENT_ID` / `OKTA_CLIENT_SECRET` | OIDC login with Okta | - |
-| `OKTA_REDIRECT_URI` | Override the callback URL | `<server>/auth/okta/callback` |
-| `OKTA_GROUP_PREPARER` / `_REVIEWER` / `_ADMIN` | Okta group names that grant each role | `JE-Preparer` / `JE-Reviewer` / `JE-Admin` |
-| `SECRET_KEY` | Session signing key (32+ chars). Required when `DEMO_MODE` is off | random per run in demo |
-| `APP_ENV` | `production` refuses to start with `DEMO_MODE=true` | `demo` |
+| `DEMO_MODE` | Seed the synthetic clients/mappings and offer the sample files (and the demo sign-in shortcuts). **Demo only.** | off |
+| `SECRET_KEY` | Session signing key (32+ chars). If unset, a per-process key is used and everyone is signed out on restart | random per run |
+| `APP_ENV` | `production` is **refused** while sign-in is self-declared | `demo` |
 | `COOKIE_SECURE` | Mark session cookie HTTPS-only | `false` |
 | `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | Enable real AI suggestions | unset → mock |
 | `DATA_DIR` | Database, uploads, exports | `./data` |
@@ -97,33 +94,23 @@ Environment variables (or a local `.env`, see `.env.example`; real env vars win)
 | `UPLOAD_RETENTION_DAYS` | Auto-delete uploads and exports after N days | 30 |
 | `DELETE_AFTER_EXPORT_DEFAULT` | Pre-tick "delete source after export" | true |
 
-The app **refuses to start** if authentication isn't configured (neither `DEMO_MODE` nor Okta), if `SECRET_KEY` is missing/short outside demo mode, or if `DEMO_MODE` is combined with `APP_ENV=production`.
+The app **refuses to start** if `APP_ENV=production` (sign-in is not verified, so it is not allowed there) or if a `SECRET_KEY` is set but shorter than 32 characters.
 
-## Switching from DEMO_MODE to real Okta
+## Sign-in today, and adding Okta later
 
-1. **In Okta (Admin Console)** → Applications → *Create App Integration* → **OIDC - OpenID Connect** → **Web Application**.
-   * Sign-in redirect URI: `https://<your-host>/auth/okta/callback` (must match exactly; or set `OKTA_REDIRECT_URI`).
-   * Sign-out redirect URI: `https://<your-host>/login`.
-   * Assignments: limit to the people/groups who should use the tool.
-2. **Create three groups** (names are configurable): `JE-Preparer`, `JE-Reviewer`, `JE-Admin`, and add users.
-3. **Add a `groups` claim** to the ID token: *Security → API → Authorization Servers → (your server) → Claims → Add claim* - name `groups`, include in **ID Token**, value type **Groups**, filter e.g. *Starts with* `JE-`. (A user with no matching group is **denied**.)
-4. **Configure the app** (values come from the Okta app; the issuer is your authorization server URL, e.g. `https://yourorg.okta.com/oauth2/default`):
-   ```bash
-   export OKTA_ISSUER="https://yourorg.okta.com/oauth2/default"
-   export OKTA_CLIENT_ID="..."
-   export OKTA_CLIENT_SECRET="..."          # from your secret store, never the repo
-   export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
-   export APP_ENV=production COOKIE_SECURE=true
-   unset DEMO_MODE
-   python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000   # behind HTTPS
-   ```
-5. Visit the site: you'll see **Sign in with Okta**; the fake-user form no longer exists (`/login/demo` returns 404). Clear the demo `data/` folder - demo clients and mappings are synthetic.
+**Today sign-in is self-declared.** The sign-in page asks for a **name**, an **email** and a **role** (Preparer, Reviewer or Admin). The app records them in the session and the audit log. **Nothing verifies them**: anyone can type any name, any email and any role, including Admin. What the form does give you:
 
-The OIDC flow uses Authorization Code with PKCE (S256) via Authlib. It has **not** been exercised against a live Okta tenant in this build (no tenant was available) - the group→role mapping, client registration and demo-off behaviour are unit-tested.
+* every action is attributed to a name and email in the audit log (logins are logged as `"verified": false`);
+* the rules that depend on *who* did something still work, keyed on the email: nobody can approve a mapping or export they prepared themselves. That is only as strong as people's honesty, because someone could simply sign in with a different email;
+* the role limits are still enforced on the server for every action.
+
+Because it is not authentication, it is for the synthetic demo only: **`APP_ENV=production` is refused**, and a banner on every page says sign-in is self-declared. Don't put real client data behind it.
+
+**To add Okta (or another identity provider) later**, everything downstream already keys off one session object created in `app/auth.py::login_user(email, name, roles, method)`. Add a route that authenticates the person (for Okta, an OIDC Authorization Code + PKCE flow, e.g. with Authlib, using the `groups` claim to decide roles with no matching group meaning no access), have it call `login_user` with the *verified* email and name, remove the self-declared form and its role choice, and lift the `APP_ENV=production` guard in `app/config.py`. Roles, segregation of duties and the audit trail need no changes. A previous revision of this repo contained a working Okta/Authlib implementation (commit `c660904`) that can be used as a starting point.
 
 ## Security and governance built in
 
-* **AuthN/AuthZ** - Okta OIDC or labelled DEMO_MODE; deny-by-default roles; CSRF tokens on every POST; fresh session on login; open-redirect-safe `next`; secure/same-site cookies; CSP, `X-Frame-Options`, `nosniff`, `no-store`.
+* **AuthZ** - self-declared sign-in (see above), deny-by-default roles enforced on every route; CSRF tokens on every POST; fresh session on login; open-redirect-safe `next`; secure/same-site cookies; CSP, `X-Frame-Options`, `nosniff`, `no-store`.
 * **Audit log** (`app/audit.py`) - append-only (DB triggers reject UPDATE/DELETE) and **hash-chained**, so edits are detectable; the Admin page verifies the chain. Records who, when, action, client, job, **mapping version used**, **SHA-256 of the uploaded file**, **who approved the export**, plus refused attempts (e.g. self-approval) and AI-suggestion calls (whether anything was sent externally).
 * **Uploads** - `.csv`/`.xlsx` only; size, row and column limits; magic-byte and content checks; macro workbooks and zip bombs rejected; XML hardened via `defusedxml`; stored under a random name with `0600` permissions in a `0700` folder, never served statically; formulas are never evaluated.
 * **Retention** - uploads and exports are purged after `UPLOAD_RETENTION_DAYS` (at startup and on demand); a per-job **delete after export** option removes the source report immediately; deletions are audited.
@@ -134,7 +121,7 @@ The OIDC flow uses Authorization Code with PKCE (S256) via Authlib. It has **not
 ```
 app/
   main.py config.py db.py        app factory, env settings, SQLite schema
-  auth.py audit.py               OIDC/demo login, roles, CSRF; hash-chained audit log
+  auth.py audit.py               self-declared sign-in, roles, CSRF; hash-chained audit log
   storage.py                     upload validation, private storage, retention
   parsing.py money.py            CSV/XLSX -> report (Decimal only); layout signature
   domain.py rules.py mapping.py  client config + mapping lines; header rules; versioned mappings
@@ -166,8 +153,7 @@ node artifact/verify_engine.js /tmp/page.html /tmp/expected.json   # 125 compari
 |---|---|
 | Parsing, rules, allocation math, validation checks, journal builder, exports, audit chain, roles/SoD, upload hardening, retention | **Real and tested** |
 | Wizard UI and the whole flow end to end (driven through a real browser during development) | **Real** |
-| DEMO_MODE login | **Mock** - fake identities, no passwords |
-| Okta OIDC | **Implemented, unit-tested, not run against a live Okta tenant** |
+| Sign-in | **Self-declared name/email/role - not verified.** Okta was removed for now and can be added later |
 | `suggest_mapping()` with `ANTHROPIC_API_KEY` | **Implemented; the request shape was verified against the installed SDK through a mock HTTP transport, but not against the live API** (no key was available). Output quality on real layouts is unknown until tried. |
 | `suggest_mapping()` without a key | **Mock** keyword heuristic, labelled "MOCK SUGGESTION" in the UI, audit log and notices |
 | Intacct / QBO CSV column layouts | **Best-effort reconstruction - verify against the client's tenant** |
@@ -176,7 +162,7 @@ node artifact/verify_engine.js /tmp/page.html /tmp/expected.json   # 125 compari
 
 ## What would be needed for production
 
-1. **Okta app registration** and group provisioning (steps above), HTTPS termination, `COOKIE_SECURE`, a real `SECRET_KEY` from a secret manager, session idle timeout and RP-initiated logout (single logout isn't implemented).
+1. **Real sign-in** (Okta or similar: app registration, group provisioning - see *Adding Okta later* above), HTTPS termination, `COOKIE_SECURE`, a real `SECRET_KEY` from a secret manager, session idle timeout and RP-initiated logout (single logout isn't implemented).
 2. **Real import templates** - download each client's current Intacct (and tenant dimension names for entity/fund) and QBO import templates; confirm journal symbol, dimensions, account naming/numbers, date format, multi-entity behaviour; add per-client export profiles and golden-file tests; do a trial import in a sandbox company.
 3. **Real mappings and charts** - import each client's chart of accounts, entities and funds from their system instead of seed data; per-client entitlements (who may see which client).
 4. **More report types and layouts** - only the wide-format *Payroll Register* exists (one row per employee, one column per pay element); long-format registers, multi-sheet workbooks, state/local taxes, accruals and reversing entries are not handled.

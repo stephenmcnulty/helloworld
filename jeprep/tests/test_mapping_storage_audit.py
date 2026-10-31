@@ -230,15 +230,11 @@ def test_retention_purge_deletes_only_expired_files_and_audits_it(db, tmp_path):
 
 # ------------------------------------------------------------------ config safety
 def test_config_refuses_unsafe_setups(tmp_path):
-    with pytest.raises(ConfigError, match="not configured"):
-        Settings.from_env({"DATA_DIR": str(tmp_path)})
-    with pytest.raises(ConfigError, match="not allowed"):
-        Settings.from_env({"DEMO_MODE": "true", "APP_ENV": "production", "DATA_DIR": str(tmp_path)})
+    with pytest.raises(ConfigError, match="self-declared"):
+        Settings.from_env({"APP_ENV": "production", "DATA_DIR": str(tmp_path)})
     with pytest.raises(ConfigError, match="SECRET_KEY"):
-        Settings.from_env({"OKTA_ISSUER": "https://x.okta.com", "OKTA_CLIENT_ID": "a", "OKTA_CLIENT_SECRET": "b",
-                           "DATA_DIR": str(tmp_path)})
-    ok = Settings.from_env({"DEMO_MODE": "true", "DATA_DIR": str(tmp_path)})
-    assert ok.demo_mode and len(ok.secret_key) >= 32
-    okta = Settings.from_env({"OKTA_ISSUER": "https://x.okta.com/", "OKTA_CLIENT_ID": "a", "OKTA_CLIENT_SECRET": "b",
-                              "SECRET_KEY": "k" * 40, "DATA_DIR": str(tmp_path)})
-    assert okta.okta_configured and okta.okta_issuer == "https://x.okta.com" and not okta.demo_mode
+        Settings.from_env({"SECRET_KEY": "too-short", "DATA_DIR": str(tmp_path)})
+    plain = Settings.from_env({"DATA_DIR": str(tmp_path)})                 # no DEMO_MODE and no secret: still starts
+    assert not plain.demo_mode and len(plain.secret_key) >= 32
+    assert Settings.from_env({"DATA_DIR": str(tmp_path)}).secret_key != plain.secret_key   # per-process random key
+    assert Settings.from_env({"DEMO_MODE": "true", "SECRET_KEY": "k" * 40, "DATA_DIR": str(tmp_path)}).secret_key == "k" * 40

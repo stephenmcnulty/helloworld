@@ -15,73 +15,32 @@ router = APIRouter()
 CSRF = [Depends(verify_csrf)]
 
 
-def demo_mode_only(request: Request) -> None:
-    """The fake-user login must not exist at all (404) unless DEMO_MODE is on."""
-    if not request.app.state.settings.demo_mode:
-        raise HTTPException(status_code=404)
-
-
 def _db(request: Request):
     return request.app.state.db
 
 
-# ------------------------------------------------------------------ authentication
+
 @router.get("/login")
-def login_page(request: Request, next_url: str = Query("/", alias="next")):
+def login_page(request: Request, next_url: str = Query("/", alias="next"), name: str = Query("", max_length=80),
+               email: str = Query("", max_length=254), role: str = Query("", max_length=20)):
     if auth.current_user(request):
         return redirect(safe_next(next_url))
-    return render(request, "login.html", demo_users=DEMO_USERS, next=safe_next(next_url),
-                  oidc_enabled=request.app.state.oauth is not None)
+    # name/email/role in the query string only pre-fill the form (the demo shortcuts use this); they sign nobody in.
+    return render(request, "login.html", demo_users=DEMO_USERS, next=safe_next(next_url), errors=[],
+                  form={"name": name, "email": email, "role": role if role in ROLE_PERMISSIONS else "preparer"})
 
 
-@router.post("/login/demo", dependencies=[Depends(demo_mode_only), Depends(verify_csrf)])
-def demo_login(request: Request, email: str = Form(""), role: str = Form(""), next_url: str = Form("/", alias="next")):
-    person = next((u for u in DEMO_USERS if u["email"] == email), None)
-    if person is None or role not in ROLE_PERMISSIONS:
-        flash(request, "Pick one of the demo users and a role.", "error")
-        return redirect("/login")
-    user = auth.login_user(request, email=person["email"], name=person["name"], roles=[role], method="demo")
+@router.post("/login", dependencies=CSRF)
+def login_submit(request: Request, name: str = Form(""), email: str = Form(""), role: str = Form(""),
+                 next_url: str = Form("/", alias="next")):
+    identity, problems = auth.clean_identity(name, email, role)
+    if identity is None:
+        return render(request, "login.html", status_code=400, demo_users=DEMO_USERS, next=safe_next(next_url), errors=problems,
+                      form={"name": name[:80], "email": email[:254], "role": role if role in ROLE_PERMISSIONS else "preparer"})
+    user = auth.login_user(request, email=identity["email"], name=identity["name"], roles=[identity["role"]], method="self-declared")
     with _db(request).tx() as conn:
-        audit.record(conn, actor=user, action="login", details={"method": "demo", "note": "DEMO_MODE fake identity"})
+        audit.record(conn, actor=user, action="login", details={"method": "self-declared", "verified": False})
     return redirect(safe_next(next_url))
-
-
-@router.get("/auth/okta/login")
-async def okta_login(request: Request, next_url: str = Query("/", alias="next")):
-    oauth = request.app.state.oauth
-    if oauth is None:
-        raise HTTPException(status_code=404)
-    request.session["post_login"] = safe_next(next_url)
-    redirect_uri = request.app.state.settings.okta_redirect_uri or str(request.url_for("okta_callback"))
-    return await oauth.okta.authorize_redirect(request, redirect_uri)
-
-
-@router.get("/auth/okta/callback", name="okta_callback")
-async def okta_callback(request: Request):
-    oauth, settings = request.app.state.oauth, request.app.state.settings
-    if oauth is None:
-        raise HTTPException(status_code=404)
-    try:
-        token = await oauth.okta.authorize_access_token(request)
-    except Exception:
-        with _db(request).tx() as conn:
-            audit.record(conn, actor={"email": "anonymous", "name": "", "roles": []}, action="login_failed", details={"method": "okta"})
-        flash(request, "Okta sign-in failed. Please try again.", "error")
-        return redirect("/login")
-    claims = token.get("userinfo") or await oauth.okta.userinfo(token=token)
-    roles = auth.roles_from_groups(claims.get("groups"), settings)
-    email = claims.get("email") or claims.get("preferred_username") or claims.get("sub", "")
-    if not roles or not email:
-        with _db(request).tx() as conn:
-            audit.record(conn, actor={"email": email or "unknown", "name": claims.get("name", ""), "roles": []},
-                         action="login_denied", details={"method": "okta", "reason": "no mapped Okta group"})
-        flash(request, "You signed in, but none of your Okta groups grants access to this tool.", "error")
-        return redirect("/login")
-    target = safe_next(request.session.get("post_login"))
-    user = auth.login_user(request, email=email, name=claims.get("name") or email, roles=roles, method="okta")
-    with _db(request).tx() as conn:
-        audit.record(conn, actor=user, action="login", details={"method": "okta"})
-    return redirect(target)
 
 
 @router.post("/logout", dependencies=CSRF)

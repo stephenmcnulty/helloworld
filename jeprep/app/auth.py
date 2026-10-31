@@ -1,22 +1,22 @@
-"""Authentication, roles and CSRF.
+"""Sign-in, roles and CSRF.
 
-Two ways in:
-  * OIDC against Okta via Authlib (OKTA_ISSUER / OKTA_CLIENT_ID / OKTA_CLIENT_SECRET). Roles come from the
-    Okta `groups` claim (group names configurable with OKTA_GROUP_*).
-  * DEMO_MODE=true: a clearly labelled form to pick a fake user and role. Disabled (404) when DEMO_MODE is off.
+Sign-in is currently SELF-DECLARED: a person types their name, email and role and the app records them. Nothing
+verifies that identity, so it is attribution for the audit log and the "you can't approve your own work" rule,
+not security. APP_ENV=production is refused for that reason (see config.py). To add real sign-in later (e.g. Okta
+OIDC), add a route that authenticates the person and calls `login_user(...)` with a verified email, name and
+roles - everything downstream (roles, segregation of duties, audit) already keys off that one session object.
 
-Authorisation is permission-based, enforced on the server for every route (never just hidden in the UI).
+Authorisation is permission-based and enforced on the server for every route (never just hidden in the UI).
 """
 from __future__ import annotations
 
 import hmac
+import re
 import secrets
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 from urllib.parse import quote
 
 from fastapi import Depends, HTTPException, Request
-
-from .config import Settings
 
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     "preparer": {"job.create", "job.work", "mapping.propose"},
@@ -30,6 +30,7 @@ ROLE_BLURBS = {
     "admin": "Manages clients and reads the audit log. Does not prepare journals.",
 }
 
+# Suggested people for the demo script. They only pre-fill the sign-in form; anyone can type anything.
 DEMO_USERS = [
     {"email": "pat.preparer@demo.example", "name": "Pat Preparer", "default_role": "preparer"},
     {"email": "rhea.reviewer@demo.example", "name": "Rhea Reviewer", "default_role": "reviewer"},
@@ -47,14 +48,28 @@ def has_perm(user: dict | None, perm: str) -> bool:
     return bool(user) and any(perm in ROLE_PERMISSIONS.get(r, set()) for r in user.get("roles", []))
 
 
-def roles_from_groups(groups: Iterable[str] | str | None, settings: Settings) -> list[str]:
-    """Map Okta group names to application roles. No matching group -> no access (deny by default)."""
-    if isinstance(groups, str):
-        groups = [groups]
-    names = set(groups or [])
-    mapping = {settings.okta_group_preparer: "preparer", settings.okta_group_reviewer: "reviewer",
-               settings.okta_group_admin: "admin"}
-    return sorted({role for group, role in mapping.items() if group in names})
+EMAIL_RE = re.compile(r"^[^@\s,;<>\"'()\[\]\\]+@[^@\s,;<>\"'()\[\]\\]+\.[^@\s,;<>\"'()\[\]\\]+$")
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def clean_identity(name: str, email: str, role: str) -> tuple[dict | None, list[str]]:
+    """Validate and normalise what was typed on the sign-in form. Returns (identity, problems)."""
+    clean_name = re.sub(r"\s+", " ", _CONTROL_RE.sub(" ", name or "")).strip()
+    clean_email = (email or "").strip().lower()
+    problems: list[str] = []
+    if not clean_name:
+        problems.append("Enter your name.")
+    elif len(clean_name) > 80:
+        problems.append("Your name can be at most 80 characters.")
+    if not clean_email:
+        problems.append("Enter your email address.")
+    elif len(clean_email) > 254 or not EMAIL_RE.match(clean_email):
+        problems.append("That doesn't look like an email address (name@example.com).")
+    if role not in ROLE_PERMISSIONS:
+        problems.append("Choose a role.")
+    if problems:
+        return None, problems
+    return {"name": clean_name, "email": clean_email, "role": role}, []
 
 
 def safe_next(target: str | None) -> str:
@@ -112,24 +127,6 @@ def require(perm: str | None = None) -> Callable[[Request], dict]:
 
 def require_user_dep(perm: str | None = None) -> Any:
     return Depends(require(perm))
-
-
-# ---------------------------------------------------------------- OIDC (Okta)
-def setup_oauth(settings: Settings) -> Any | None:
-    """Register Okta as an OIDC provider with Authlib. Returns None when Okta isn't configured."""
-    if not settings.okta_configured:
-        return None
-    from authlib.integrations.starlette_client import OAuth
-
-    oauth = OAuth()
-    oauth.register(
-        name="okta",
-        client_id=settings.okta_client_id,
-        client_secret=settings.okta_client_secret,
-        server_metadata_url=f"{settings.okta_issuer}/.well-known/openid-configuration",
-        client_kwargs={"scope": "openid profile email groups", "code_challenge_method": "S256"},
-    )
-    return oauth
 
 
 def login_url(next_url: str) -> str:
